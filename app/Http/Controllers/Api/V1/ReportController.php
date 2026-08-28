@@ -112,4 +112,19 @@ class ReportController extends Controller
 
         return response()->json(['data' => $reports]);
     }
+
+    public function show(Request $request, $id)
+    {
+        // Pastikan warga hanya bisa melihat detail laporan miliknya sendiri
+        $report = Report::where('user_id', $request->user()->id)
+            ->with(['media', 'lampPost', 'histories' => function($q) {
+                $q->orderBy('created_at', 'desc');
+            }])
+            ->findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $report
+        ]);
+    }
 }

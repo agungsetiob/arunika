@@ -23,7 +23,6 @@ Route::prefix('v1')->group(function () {
         Route::get('/reports/{id}', [ReportController::class, 'show']);
         Route::get('/lamp-posts/nearby', [LampPostController::class, 'nearby']);
 
-        // Petugas Lapangan
         Route::middleware('role:petugas')->prefix('petugas')->group(function () {
             Route::get('/assignments', [AssignmentController::class, 'index']);
             Route::get('/assignments/{id}', [AssignmentController::class, 'show']);
