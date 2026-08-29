@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Report;
+// use App\Models\User;
+// use App\Services\FcmService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -34,7 +36,8 @@ class ReportController extends Controller
                   * cos( radians( lng ) - radians(?)
                   ) + sin( radians(?) ) *
                   sin( radians( lat ) ) )
-                ) AS distance', [$lat, $lng, $lat]
+                ) AS distance',
+                [$lat, $lng, $lat]
             )
             ->whereIn('status', ['pending', 'verified', 'in_progress']) // Hanya cek laporan yang masih aktif
             ->having('distance', '<', $radius)
@@ -68,7 +71,7 @@ class ReportController extends Controller
                 foreach ($request->file('photos') as $photo) {
                     // Simpan ke storage/app/public/reports
                     $path = $photo->store('reports', 'public');
-                    
+
                     $report->media()->create([
                         'file_path' => $path,
                         'type' => 'before'
@@ -85,6 +88,18 @@ class ReportController extends Controller
             ]);
 
             DB::commit();
+
+            // Notifikasi ke semua Petugas Lapangan
+            // $petugasUsers = User::role('petugas')->whereNotNull('fcm_token')->get();
+
+            // foreach ($petugasUsers as $petugas) {
+            //     $fcmService->sendToDevice(
+            //         $petugas->fcm_token,
+            //         'Laporan Kerusakan Baru! 🚨',
+            //         'Terdapat laporan kerusakan ' . str_replace('_', ' ', $validated['damage_category']) . ' di area Anda.',
+            //         ['report_id' => $report->id, 'type' => 'new_report']
+            //     );
+            // }
 
             return response()->json([
                 'status' => 'success',
@@ -104,22 +119,29 @@ class ReportController extends Controller
     public function myReports(Request $request)
     {
         $reports = Report::where('user_id', $request->user()->id)
-            ->with(['media' => function($q) {
-                $q->where('type', 'before');
-            }])
+            ->with([
+                'media' => function ($q) {
+                    $q->where('type', 'before');
+                }
+            ])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('id', 'desc')
+            ->paginate(9);
 
-        return response()->json(['data' => $reports]);
+        return response()->json($reports);
     }
 
     public function show(Request $request, $id)
     {
         // Pastikan warga hanya bisa melihat detail laporan miliknya sendiri
         $report = Report::where('user_id', $request->user()->id)
-            ->with(['media', 'lampPost', 'histories' => function($q) {
-                $q->orderBy('created_at', 'desc');
-            }])
+            ->with([
+                'media',
+                'lampPost',
+                'histories' => function ($q) {
+                    $q->orderBy('created_at', 'desc');
+                }
+            ])
             ->findOrFail($id);
 
         return response()->json([

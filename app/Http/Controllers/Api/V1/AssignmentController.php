@@ -14,20 +14,18 @@ class AssignmentController extends Controller
      */
     public function index(Request $request)
     {
-        $status = $request->query('status'); // Bisa filter by status (assigned, completed)
+        $status = $request->query('status');
 
         $assignments = Assignment::where('petugas_id', $request->user()->id)
-            ->with(['report.lampPost', 'report.user:id,name,phone']) // Ambil relasi penting
+            ->with(['report.lampPost', 'report.user:id,name,phone'])
             ->when($status, function ($query, $status) {
                 return $query->where('status', $status);
             })
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('id', 'desc')
+            ->paginate(9);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $assignments
-        ]);
+        return response()->json($assignments); 
     }
 
     /**
