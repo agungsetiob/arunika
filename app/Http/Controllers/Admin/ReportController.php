@@ -12,12 +12,29 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        $reports = Report::with(['user', 'lampPost'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = Report::with(['user', 'lampPost'])
+            ->orderBy('created_at', 'desc');
 
-        return Inertia::render('Admin/Reports/Index', [
-            'reports' => $reports
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('alamat_lengkap', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($qu) use ($search) {
+                      $qu->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $reports = $query->paginate(10)->withQueryString();
+
+        return inertia('Admin/Reports/Index', [
+            'reports' => $reports,
+            'filters' => $request->only(['search', 'status'])
         ]);
     }
 
@@ -88,5 +105,59 @@ class ReportController extends Controller
         // (Opsional nanti) Trigger Push Notification FCM ke aplikasi petugas di sini
 
         return back();
+    }
+
+    public function export(Request $request)
+    {
+        $query = Report::with(['user', 'lampPost'])->orderBy('created_at', 'desc');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('alamat_lengkap', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($qu) use ($search) {
+                      $qu->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $reports = $query->get();
+        $fileName = 'Laporan_Arunika_' . date('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['ID Tiket', 'Tanggal', 'Nama Pelapor', 'Telepon', 'Jenis', 'Kategori', 'Status', 'Alamat Lengkap'];
+
+        $callback = function() use($reports, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($reports as $row) {
+                fputcsv($file, [
+                    $row->id,
+                    $row->created_at->format('Y-m-d H:i'),
+                    $row->user->name,
+                    $row->user->phone,
+                    $row->type == 'pju' ? 'PJU' : 'Traffic Light',
+                    str_replace('_', ' ', strtoupper($row->damage_category)),
+                    strtoupper($row->status),
+                    $row->alamat_lengkap
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

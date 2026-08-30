@@ -9,10 +9,79 @@ use Inertia\Inertia;
 
 class LampPostController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $lampPosts = LampPost::orderBy('created_at', 'desc')->paginate(10);
-        return Inertia::render('Admin/LampPosts/Index', ['lampPosts' => $lampPosts]);
+        $query = LampPost::orderBy('created_at', 'desc');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('code_tiang', 'like', "%{$search}%")
+                  ->orWhere('alamat', 'like', "%{$search}%")
+                  ->orWhere('kecamatan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status_lampu')) {
+            $query->where('status_lampu', $request->status_lampu);
+        }
+
+        $lampPosts = $query->paginate(10)->withQueryString();
+
+        return inertia('Admin/LampPosts/Index', [
+            'lampPosts' => $lampPosts,
+            'filters' => $request->only(['search', 'status_lampu'])
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $query = LampPost::orderBy('created_at', 'desc');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('code_tiang', 'like', "%{$search}%")
+                  ->orWhere('alamat', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status_lampu')) {
+            $query->where('status_lampu', $request->status_lampu);
+        }
+
+        $lampPosts = $query->get();
+        $fileName = 'Master_Lampu_Arunika_' . date('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['Kode Lampu', 'Jenis', 'Status', 'Kecamatan', 'Kelurahan', 'Alamat', 'Latitude', 'Longitude'];
+
+        $callback = function() use($lampPosts, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            foreach ($lampPosts as $row) {
+                fputcsv($file, [
+                    $row->code_tiang,
+                    $row->type == 'pju' ? 'PJU' : 'Traffic Light',
+                    strtoupper($row->status_lampu),
+                    $row->kecamatan,
+                    $row->kelurahan,
+                    $row->alamat,
+                    $row->lat,
+                    $row->lng
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function create()

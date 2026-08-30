@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AssignmentController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\LampPostController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ReportController;
@@ -27,6 +28,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/lamp-posts/nearby', [LampPostController::class, 'nearby']);
 
         Route::middleware(['role:admin'])->prefix('admin')->group(function () {
+            Route::get('/dashboard-stats', [DashboardController::class, 'index']);
             Route::get('/reports', [AdminController::class, 'getPendingReports']);
             Route::get('/petugas', [AdminController::class, 'getPetugasList']);
             Route::post('/reports/{id}/verify', [AdminController::class, 'verifyReport']);
