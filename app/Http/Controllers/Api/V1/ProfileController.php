@@ -35,4 +35,20 @@ class ProfileController extends Controller
             'data' => $user
         ]);
     }
+
+    public function updateFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string'
+        ]);
+
+        $request->user()->update([
+            'fcm_token' => $request->fcm_token
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'FCM Token berhasil diperbarui'
+        ]);
+    }
 }

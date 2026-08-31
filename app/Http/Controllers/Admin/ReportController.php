@@ -7,6 +7,10 @@ use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+use Kreait\Laravel\Firebase\Facades\Firebase;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
@@ -102,9 +106,26 @@ class ReportController extends Controller
             'notes' => 'Laporan diteruskan ke petugas lapangan.'
         ]);
 
-        // (Opsional nanti) Trigger Push Notification FCM ke aplikasi petugas di sini
+        $petugas = User::find($request->petugas_id);
 
-        return back();
+        // Jika petugas punya token FCM di HP-nya, tembak notifikasi!
+        if ($petugas && $petugas->fcm_token) {
+            $messaging = Firebase::messaging();
+            $message = CloudMessage::withTarget('token', $petugas->fcm_token)
+                ->withNotification(Notification::create(
+                    'Tugas Perbaikan Baru!', // Judul Notifikasi
+                    'Ada tugas perbaikan masuk di area Anda. Silakan cek aplikasi.' // Isi Notifikasi
+                ));
+
+            try {
+                $messaging->send($message);
+            } catch (\Exception $e) {
+                // Abaikan error jika token kadaluarsa, agar aplikasi tidak crash
+                Log::error('Gagal mengirim FCM: ' . $e->getMessage());
+            }
+        }
+
+        return redirect()->back()->with('success', 'Petugas berhasil ditugaskan.');
     }
 
     public function export(Request $request)
