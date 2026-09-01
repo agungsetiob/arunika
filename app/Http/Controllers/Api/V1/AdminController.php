@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Report;
 use App\Models\User;
-use App\Models\Assignment;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+use Kreait\Laravel\Firebase\Facades\Firebase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
@@ -15,7 +18,7 @@ class AdminController extends Controller
     {
         // Parameter status=pending,verified dari frontend
         $statuses = explode(',', $request->query('status', 'pending'));
-        
+
         $reports = Report::with(['media', 'lampPost'])
             ->whereIn('status', $statuses)
             ->orderBy('created_at', 'desc')
@@ -29,7 +32,7 @@ class AdminController extends Controller
     {
         // Pastikan package Spatie Permission sudah terinstall di Laravel
         $petugas = User::role('petugas')->select('id', 'name', 'phone')->get();
-        
+
         return response()->json(['data' => $petugas]);
     }
 
@@ -40,7 +43,7 @@ class AdminController extends Controller
         try {
             $report = Report::findOrFail($id);
             $report->update(['status' => 'verified']);
-            
+
             $report->histories()->create([
                 'changed_by' => $request->user()->id,
                 'from_status' => 'pending',
@@ -65,7 +68,7 @@ class AdminController extends Controller
         try {
             $report = Report::findOrFail($id);
             $report->update(['status' => 'rejected']);
-            
+
             $report->histories()->create([
                 'changed_by' => $request->user()->id,
                 'from_status' => 'pending',
@@ -86,15 +89,15 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'report_id' => 'required|exists:reports,id',
-            'user_id' => 'required|exists:users,id', // Dari mobile kita kirim user_id untuk petugas
+            'user_id' => 'required|exists:users,id', // Dari mobile kita kirim user_id
         ]);
 
         DB::beginTransaction();
         try {
             $report = Report::findOrFail($validated['report_id']);
             $oldStatus = $report->status; // Simpan status lama untuk history
-            
-            // 1. Update status laporan (Sesuai alur Web CMS)
+
+            // 1. Update status laporan 
             $report->update(['status' => 'in_progress']);
 
             // 2. Buat record assignment
@@ -103,7 +106,7 @@ class AdminController extends Controller
                 'status' => 'assigned'
             ]);
 
-            // 3. Catat riwayat (Sesuai alur Web CMS)
+            // 3. Catat riwayat 
             $report->histories()->create([
                 'changed_by' => $request->user()->id,
                 'from_status' => $oldStatus,
@@ -113,9 +116,36 @@ class AdminController extends Controller
 
             DB::commit();
 
-            /* --- COMMENT SEMENTARA UNTUK FCM ---
-            // (Opsional nanti) Trigger Push Notification FCM ke aplikasi petugas di sini
-            ------------------------------------------------ */
+            // ==========================================
+            // PERBAIKAN DI SINI: Gunakan $validated['user_id']
+            // ==========================================
+            $petugas = User::find($validated['user_id']);
+
+            // Jika petugas punya token FCM di HP-nya, tembak notifikasi!
+            if ($petugas && $petugas->fcm_token) {
+                try {
+                    $messaging = Firebase::messaging();
+                    $message = CloudMessage::withTarget('token', $petugas->fcm_token)
+                        ->withNotification(Notification::create(
+                            '🚨 Tugas Perbaikan Baru!', // Judul Notifikasi
+                            'Ada tugas perbaikan di ' . $report->alamat_lengkap . '. Silakan cek aplikasi.' // Isi lebih informatif
+                        ));
+
+                    $messaging->send($message);
+                } catch (\Exception $e) {
+                    Log::error('Gagal mengirim FCM Assign Mobile: ' . $e->getMessage());
+                }
+            }
+
+            $petugas->notifications()->create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'type' => 'App\Notifications\Assignment', // Penanda tipe notifikasi
+                'data' => [
+                    'title' => 'Tugas Perbaikan Baru',
+                    'body' => 'Ada tugas perbaikan di ' . $report->alamat_lengkap,
+                    'type' => 'assignment' // Ini untuk ikon di React Native nanti
+                ],
+            ]);
 
             return response()->json([
                 'status' => 'success',

@@ -11,6 +11,7 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -89,43 +90,64 @@ class ReportController extends Controller
     {
         $request->validate(['petugas_id' => 'required|exists:users,id']);
 
-        // Update status laporan
-        $report->update(['status' => 'in_progress']);
-        
-        // Buat record assignment
-        $report->assignment()->create([
-            'petugas_id' => $request->petugas_id,
-            'status' => 'assigned'
-        ]);
+        DB::beginTransaction();
+        try {
+            // Update status laporan
+            $report->update(['status' => 'in_progress']);
+            
+            // Buat record assignment
+            $report->assignment()->create([
+                'petugas_id' => $request->petugas_id,
+                'status' => 'assigned'
+            ]);
 
-        // Catat riwayat
-        $report->histories()->create([
-            'changed_by' => $request->user()->id,
-            'from_status' => 'verified',
-            'to_status' => 'in_progress',
-            'notes' => 'Laporan diteruskan ke petugas lapangan.'
-        ]);
+            // Catat riwayat
+            $report->histories()->create([
+                'changed_by' => $request->user()->id,
+                'from_status' => 'verified',
+                'to_status' => 'in_progress',
+                'notes' => 'Laporan diteruskan ke petugas lapangan.'
+            ]);
 
-        $petugas = User::find($request->petugas_id);
+            DB::commit();
 
-        // Jika petugas punya token FCM di HP-nya, tembak notifikasi!
-        if ($petugas && $petugas->fcm_token) {
-            $messaging = Firebase::messaging();
-            $message = CloudMessage::withTarget('token', $petugas->fcm_token)
-                ->withNotification(Notification::create(
-                    'Tugas Perbaikan Baru!', // Judul Notifikasi
-                    'Ada tugas perbaikan masuk di area Anda. Silakan cek aplikasi.' // Isi Notifikasi
-                ));
+            // ==========================================
+            // KIRIM FCM NOTIFICATION KE PETUGAS
+            // ==========================================
+            $petugas = User::find($request->petugas_id);
 
-            try {
-                $messaging->send($message);
-            } catch (\Exception $e) {
-                // Abaikan error jika token kadaluarsa, agar aplikasi tidak crash
-                Log::error('Gagal mengirim FCM: ' . $e->getMessage());
+            // Jika petugas punya token FCM di HP-nya, tembak notifikasi!
+            if ($petugas && $petugas->fcm_token) {
+                try {
+                    $messaging = Firebase::messaging();
+                    $message = CloudMessage::withTarget('token', $petugas->fcm_token)
+                        ->withNotification(Notification::create(
+                            '🚨 Tugas Perbaikan Baru!', // Judul Notifikasi
+                            'Ada tugas perbaikan ' . strtoupper($report->type) . ' di ' . $report->alamat_lengkap . '. Silakan cek aplikasi.' 
+                        ));
+
+                    $messaging->send($message);
+                } catch (\Exception $e) {
+                    Log::error('Gagal mengirim FCM Assign Web: ' . $e->getMessage());
+                }
             }
-        }
 
-        return redirect()->back()->with('success', 'Petugas berhasil ditugaskan.');
+            $petugas->notifications()->create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'type' => 'App\Notifications\Assignment', // Penanda tipe notifikasi
+                'data' => [
+                    'title' => 'Tugas Perbaikan Baru',
+                    'body' => 'Ada tugas perbaikan di ' . $report->alamat_lengkap,
+                    'type' => 'assignment' // Ini untuk ikon di React Native nanti
+                ],
+            ]);
+
+            return redirect()->back()->with('success', 'Petugas berhasil ditugaskan.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menugaskan petugas: ' . $e->getMessage());
+        }
     }
 
     public function export(Request $request)

@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Report;
-// use App\Models\User;
-// use App\Services\FcmService;
+use App\Models\User;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+use Kreait\Laravel\Firebase\Facades\Firebase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -89,17 +91,46 @@ class ReportController extends Controller
 
             DB::commit();
 
-            // Notifikasi ke semua Petugas Lapangan
-            // $petugasUsers = User::role('petugas')->whereNotNull('fcm_token')->get();
+            // ==========================================
+            // 4. KIRIM NOTIFIKASI KE SEMUA ADMIN (FCM & DATABASE)
+            // ==========================================
+            
+            // Ambil semua objek User yang rolenya admin
+            $admins = User::where('role', 'admin')->get();
 
-            // foreach ($petugasUsers as $petugas) {
-            //     $fcmService->sendToDevice(
-            //         $petugas->fcm_token,
-            //         'Laporan Kerusakan Baru! 🚨',
-            //         'Terdapat laporan kerusakan ' . str_replace('_', ' ', $validated['damage_category']) . ' di area Anda.',
-            //         ['report_id' => $report->id, 'type' => 'new_report']
-            //     );
-            // }
+            // Saring hanya token-token FCM yang tidak null untuk dikirim via Firebase
+            $adminTokens = $admins->whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
+
+            // A. Kirim Push Notification via Firebase Multicast
+            if (!empty($adminTokens)) {
+                try {
+                    $messaging = Firebase::messaging();
+                    $message = CloudMessage::new()
+                        ->withNotification(Notification::create(
+                            '🚨 Laporan Baru Masuk!',
+                            'Ada kerusakan ' . str_replace('_', ' ', $report->damage_category) . ' di area ' . $report->alamat_lengkap
+                        ));
+
+                    $messaging->sendMulticast($message, $adminTokens);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Gagal mengirim FCM Multicast ke Admin: ' . $e->getMessage());
+                }
+            }
+
+            // B. Simpan ke Database Notification untuk masing-masing Admin
+            // Menggunakan foreach agar setiap admin mendapat riwayat notifikasinya sendiri
+            foreach ($admins as $admin) {
+                $admin->notifications()->create([
+                    'id' => \Illuminate\Support\Str::uuid(),
+                    'type' => 'App\Notifications\NewReport', 
+                    'data' => [
+                        'title' => 'Laporan Baru Masuk!',
+                        'body' => 'Kerusakan ' . str_replace('_', ' ', $report->damage_category) . ' di ' . $report->alamat_lengkap,
+                        'type' => 'alert' // Tipe alert (Warna biru di mobile)
+                    ],
+                ]);
+            }
+            // ==========================================
 
             return response()->json([
                 'status' => 'success',
