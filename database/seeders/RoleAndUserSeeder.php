@@ -20,7 +20,7 @@ class RoleAndUserSeeder extends Seeder
         $admin = User::firstOrCreate([
             'email' => 'admin@silampu.com'
         ], [
-            'name' => 'Admin Dinas PUPR',
+            'name' => 'Admin Dinas',
             'phone' => '081100000001',
             'nik' => '1234567890123451',
             'password' => Hash::make('password123'), 
