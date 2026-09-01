@@ -38,7 +38,7 @@ const steps: Step[] = [
         description:
             "Buat akun ARUNIKA dengan data yang valid agar setiap laporan dapat dipantau dengan transparan.",
         icon: UserPlus,
-        color: "text-blue-600 bg-blue-50 border-blue-100",
+        color: "text-orange-600 bg-orange-50 border-orange-100",
     },
     {
         id: "02",
@@ -46,7 +46,7 @@ const steps: Step[] = [
         description:
             "Laporkan lampu jalan atau traffic light yang bermasalah dengan lokasi, foto, dan keterangan kejadian.",
         icon: ClipboardList,
-        color: "text-amber-600 bg-amber-50 border-amber-100",
+        color: "text-orange-700 bg-orange-100 border-orange-200",
     },
     {
         id: "03",
@@ -54,7 +54,7 @@ const steps: Step[] = [
         description:
             "Laporan Anda akan diverifikasi untuk memastikan informasi dan lokasi gangguan dapat ditindaklanjuti.",
         icon: FileCheck2,
-        color: "text-indigo-600 bg-indigo-50 border-indigo-100",
+        color: "text-orange-800 bg-orange-200 border-orange-300",
     },
     {
         id: "04",
@@ -62,7 +62,7 @@ const steps: Step[] = [
         description:
             "Tim teknis melakukan pemeriksaan dan pengerjaan di lapangan sampai gangguan berhasil ditangani.",
         icon: Wrench,
-        color: "text-orange-600 bg-orange-50 border-orange-100",
+        color: "text-orange-900 bg-orange-300 border-orange-400",
     },
     {
         id: "05",
@@ -70,7 +70,7 @@ const steps: Step[] = [
         description:
             "Setelah pekerjaan selesai, status laporan diperbarui dan hasil penanganan dapat Anda lihat di aplikasi.",
         icon: CheckCircle2,
-        color: "text-emerald-600 bg-emerald-50 border-emerald-100",
+        color: "text-white bg-orange-500 border-orange-600",
     },
 ];
 
@@ -86,8 +86,9 @@ export default function LandingPage() {
     return (
         <div className="min-h-screen bg-white text-slate-900">
             <Head title="Smart PJU System" />
+
             {/* =========================================================
-                STATIC / FIXED NAVBAR
+                NAVBAR
             ========================================================== */}
             <header className="fixed inset-x-0 top-0 z-[100] border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -99,12 +100,10 @@ export default function LandingPage() {
                                 alt="Logo BERAKSI"
                                 className="h-11 w-auto object-contain"
                             />
-
                             <div className="hidden border-l border-white/20 pl-3 sm:block">
                                 <div className="text-sm font-bold tracking-wide text-white">
                                     ARUNIKA
                                 </div>
-
                                 <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400">
                                     Smart PJU System
                                 </div>
@@ -116,7 +115,7 @@ export default function LandingPage() {
                             {auth.user ? (
                                 <a
                                     href="/dashboard"
-                                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/25 hover:bg-white/10"
+                                    className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-orange-500/50 hover:bg-orange-500/20"
                                 >
                                     <User className="h-4 w-4" />
                                     {auth.user.name}
@@ -124,7 +123,7 @@ export default function LandingPage() {
                             ) : (
                                 <a
                                     href="/login"
-                                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/25 hover:bg-white/10"
+                                    className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-orange-500/50 hover:bg-orange-500/20"
                                 >
                                     <LogIn className="h-4 w-4" />
                                     Login
@@ -190,27 +189,23 @@ export default function LandingPage() {
                     }}
                 />
 
-                {/* Blue glow */}
-                <div className="pointer-events-none absolute left-[10%] top-0 h-[500px] w-[600px] -translate-y-1/3 rounded-full bg-blue-500/10 blur-[130px]" />
-
-                {/* Green glow */}
-                <div className="pointer-events-none absolute bottom-0 right-[10%] h-[400px] w-[500px] rounded-full bg-emerald-500/10 blur-[130px]" />
+                {/* Orange glows */}
+                <div className="pointer-events-none absolute left-[10%] top-0 h-[500px] w-[600px] -translate-y-1/3 rounded-full bg-orange-500/10 blur-[130px]" />
+                <div className="pointer-events-none absolute bottom-0 right-[10%] h-[400px] w-[500px] rounded-full bg-amber-500/10 blur-[130px]" />
 
                 <div className="relative z-10 mx-auto grid max-w-7xl items-end gap-10 px-4 pb-0 pt-16 sm:px-6 md:grid-cols-12 md:pt-20 lg:px-8">
-                    {/* =================================================
-                        HERO LEFT
-                    ================================================== */}
+                    {/* HERO LEFT */}
                     <div className="pb-12 md:col-span-7 md:pb-24">
                         {/* Badge */}
-                        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-800/40 bg-blue-950/70 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-blue-300 backdrop-blur">
-                            <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-800/40 bg-orange-950/70 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-orange-300 backdrop-blur">
+                            <Sparkles className="h-3.5 w-3.5 text-orange-400" />
                             Sistem Pengaduan Infrastruktur
                         </div>
 
                         {/* Heading */}
                         <h1 className="max-w-3xl text-[38px] font-extrabold leading-[1.08] tracking-tight text-white sm:text-[50px] lg:text-[60px]">
                             Bersama Menjaga{" "}
-                            <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-300 bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-orange-400 via-amber-300 to-yellow-200 bg-clip-text text-transparent">
                                 Jalan Tetap Terang
                             </span>{" "}
                             dan Aman.
@@ -226,7 +221,6 @@ export default function LandingPage() {
 
                         <div className="mt-9">
                             <div className="flex items-center gap-4">
-                                {/* Google Play */}
                                 <a
                                     href={downloadLinks.googlePlay}
                                     target="_blank"
@@ -239,8 +233,6 @@ export default function LandingPage() {
                                         className="h-12 transition-transform hover:scale-105"
                                     />
                                 </a>
-
-                                {/* App Store */}
                                 <a
                                     href={downloadLinks.appStore}
                                     target="_blank"
@@ -257,13 +249,9 @@ export default function LandingPage() {
                         </div>
                     </div>
 
-                    {/* =================================================
-                        HERO RIGHT - BUPATI & WAKIL
-                    ================================================== */}
+                    {/* HERO RIGHT - BUPATI & WAKIL */}
                     <div className="relative flex justify-center md:col-span-5 md:self-end">
-                        {/* Glow behind image */}
-                        <div className="absolute bottom-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" />
-
+                        <div className="absolute bottom-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-orange-500/10 blur-3xl" />
                         <img
                             src="/bupati-dan-wakil.png"
                             alt="Bupati dan Wakil Bupati"
@@ -284,13 +272,11 @@ export default function LandingPage() {
                         title="Lampu Jalan"
                         description="Laporkan lampu jalan mati, rusak, atau membutuhkan perbaikan."
                     />
-
                     <FeatureCard
                         icon={TrafficCone}
                         title="Traffic Light"
                         description="Laporkan traffic light yang tidak berfungsi atau mengalami gangguan."
                     />
-
                     <FeatureCard
                         icon={MapPin}
                         title="Berbasis Lokasi"
@@ -300,20 +286,18 @@ export default function LandingPage() {
             </section>
 
             {/* =========================================================
-                FLOW
+                FLOW (CARA KERJA)
             ========================================================== */}
-            <section className="bg-slate-50 py-20 md:py-24">
+            <section className="bg-orange-50/50 py-20 md:py-24">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     {/* Heading */}
                     <div className="mx-auto mb-14 max-w-2xl text-center">
-                        <span className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+                        <span className="text-xs font-bold uppercase tracking-[0.18em] text-orange-600">
                             Cara Kerja ARUNIKA
                         </span>
-
                         <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
                             Dari Laporan Hingga Selesai Ditangani
                         </h2>
-
                         <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500 md:text-base">
                             Ikuti proses pengaduan dengan mudah dan pantau
                             perkembangan laporan Anda secara transparan.
@@ -324,15 +308,14 @@ export default function LandingPage() {
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
                         {steps.map((step, index) => {
                             const Icon = step.icon;
-
                             return (
                                 <div
                                     key={step.id}
-                                    className="group relative flex flex-col rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg"
+                                    className="group relative flex flex-col rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
                                 >
                                     {/* Connector */}
                                     {index < steps.length - 1 && (
-                                        <div className="absolute left-[85%] top-[51px] hidden w-[30%] border-t border-dashed border-slate-300 lg:block" />
+                                        <div className="absolute left-[85%] top-[51px] hidden w-[30%] border-t border-dashed border-orange-300 lg:block" />
                                     )}
 
                                     {/* Icon + number */}
@@ -342,18 +325,16 @@ export default function LandingPage() {
                                         >
                                             <Icon className="h-5 w-5 stroke-[2]" />
                                         </div>
-
-                                        <span className="font-mono text-2xl font-black text-slate-200 transition group-hover:text-slate-300">
+                                        <span className="font-mono text-2xl font-black text-orange-200 transition group-hover:text-orange-300">
                                             {step.id}
                                         </span>
                                     </div>
 
                                     {/* Content */}
                                     <div className="relative z-10 mt-5">
-                                        <h3 className="text-sm font-bold text-slate-800 transition group-hover:text-blue-600">
+                                        <h3 className="text-sm font-bold text-slate-800 transition group-hover:text-orange-600">
                                             {step.title}
                                         </h3>
-
                                         <p className="mt-2 text-xs font-medium leading-relaxed text-slate-500 md:text-sm">
                                             {step.description}
                                         </p>
@@ -376,18 +357,15 @@ export default function LandingPage() {
                             alt="Logo BERAKSI"
                             className="h-9 w-auto object-contain"
                         />
-
                         <div>
                             <div className="text-sm font-bold text-white">
                                 ARUNIKA
                             </div>
-
                             <div className="text-[10px] text-slate-500">
                                 Sistem Pengaduan Lampu Jalan & Traffic Light
                             </div>
                         </div>
                     </div>
-
                     <div className="text-xs text-slate-500">
                         © {new Date().getFullYear()} ARUNIKA. Semua hak
                         dilindungi.
@@ -400,14 +378,12 @@ export default function LandingPage() {
 
 function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
     return (
-        <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+        <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
                 <Icon className="h-5 w-5" />
             </div>
-
             <div>
                 <h3 className="text-sm font-bold text-slate-800">{title}</h3>
-
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">
                     {description}
                 </p>
