@@ -46,6 +46,7 @@ export default function Authenticated({
         { name: 'Dashboard', href: 'admin.dashboard', icon: LayoutDashboard, pattern: 'admin.dashboard' },
         { name: 'Data Laporan', href: 'admin.reports.index', icon: FileText, pattern: 'admin.reports.*' },
         { name: 'Master Lampu', href: 'admin.lamp-posts.index', icon: Lightbulb, pattern: 'admin.lamp-posts.*' },
+        { name: 'Manajemen User', href: 'admin.users.index', icon: User, pattern: 'admin.users.*' },
     ];
 
     // Ekstraksi komponen Sidebar agar bisa dipakai di Desktop & Mobile
@@ -73,7 +74,7 @@ export default function Authenticated({
                                     href={route(item.href)}
                                     className={`group flex items-center gap-x-3 rounded-xl p-3 text-sm font-semibold transition-all duration-200 ${
                                         isActive
-                                            ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
+                                            ? 'bg-orange-600 text-white shadow-md shadow-slate-900/10'
                                             : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                                     }`}
                                 >

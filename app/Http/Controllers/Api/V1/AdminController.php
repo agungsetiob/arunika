@@ -87,38 +87,40 @@ class AdminController extends Controller
     // 3. Mengeksekusi penugasan (Assign)
     public function assignPetugas(Request $request)
     {
+        // 1. Tambahkan validasi priority
         $validated = $request->validate([
             'report_id' => 'required|exists:reports,id',
-            'user_id' => 'required|exists:users,id', // Dari mobile kita kirim user_id
+            'user_id' => 'required|exists:users,id', 
+            'priority' => 'required|in:low,medium,high,emergency',
         ]);
 
         DB::beginTransaction();
         try {
             $report = Report::findOrFail($validated['report_id']);
-            $oldStatus = $report->status; // Simpan status lama untuk history
+            $oldStatus = $report->status;
 
-            // 1. Update status laporan 
-            $report->update(['status' => 'in_progress']);
+            // 2. Update status DAN priority laporan
+            $report->update([
+                'status' => 'in_progress',
+                'priority' => $validated['priority']
+            ]);
 
-            // 2. Buat record assignment
+            // Buat record assignment
             $report->assignment()->create([
                 'petugas_id' => $validated['user_id'],
                 'status' => 'assigned'
             ]);
 
-            // 3. Catat riwayat 
+            // Catat riwayat beserta info prioritasnya
             $report->histories()->create([
                 'changed_by' => $request->user()->id,
                 'from_status' => $oldStatus,
                 'to_status' => 'in_progress',
-                'notes' => 'Laporan diteruskan ke petugas lapangan (via Mobile).'
+                'notes' => 'Laporan diteruskan ke petugas (via Mobile). Prioritas: ' . strtoupper($validated['priority'])
             ]);
 
             DB::commit();
 
-            // ==========================================
-            // PERBAIKAN DI SINI: Gunakan $validated['user_id']
-            // ==========================================
             $petugas = User::find($validated['user_id']);
 
             // Jika petugas punya token FCM di HP-nya, tembak notifikasi!
@@ -128,29 +130,29 @@ class AdminController extends Controller
                     $message = CloudMessage::new()
                         ->withToken($petugas->fcm_token)
                         ->withNotification(Notification::create(
-                            '🚨 Tugas Perbaikan Baru!',
-                            'Ada tugas perbaikan di ' . $report->alamat_lengkap . '. Silakan cek aplikasi.'
+                            '🚨 Tugas Baru! (' . strtoupper($validated['priority']) . ')', // Tambahkan info prioritas di Judul Notif
+                            'Tugas perbaikan di ' . $report->alamat_lengkap . '.'
                         ));
 
                     $messaging->send($message);
                 } catch (\Exception $e) {
-                    Log::error('Gagal mengirim FCM Assign Mobile: ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Gagal mengirim FCM Assign Mobile: ' . $e->getMessage());
                 }
             }
 
             $petugas->notifications()->create([
                 'id' => \Illuminate\Support\Str::uuid(),
-                'type' => 'App\Notifications\Assignment', // Penanda tipe notifikasi
+                'type' => 'App\Notifications\Assignment',
                 'data' => [
-                    'title' => 'Tugas Perbaikan Baru',
+                    'title' => 'Tugas Baru (' . strtoupper($validated['priority']) . ')',
                     'body' => 'Ada tugas perbaikan di ' . $report->alamat_lengkap,
-                    'type' => 'assignment' // Ini untuk ikon di React Native nanti
+                    'type' => 'assignment'
                 ],
             ]);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Tugas berhasil diberikan kepada petugas.',
+                'message' => 'Tugas dengan prioritas ' . strtoupper($validated['priority']) . ' berhasil diberikan kepada petugas.',
             ]);
 
         } catch (\Exception $e) {

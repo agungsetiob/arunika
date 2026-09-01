@@ -88,25 +88,32 @@ class ReportController extends Controller
 
     public function assign(Request $request, Report $report)
     {
-        $request->validate(['petugas_id' => 'required|exists:users,id']);
+        // 1. Tambahkan validasi priority
+        $validated = $request->validate([
+            'petugas_id' => 'required|exists:users,id',
+            'priority' => 'required|in:low,medium,high,emergency',
+        ]);
 
         DB::beginTransaction();
         try {
-            // Update status laporan
-            $report->update(['status' => 'in_progress']);
+            // 2. Update status DAN priority laporan
+            $report->update([
+                'status' => 'in_progress',
+                'priority' => $validated['priority']
+            ]);
             
             // Buat record assignment
             $report->assignment()->create([
-                'petugas_id' => $request->petugas_id,
+                'petugas_id' => $validated['petugas_id'],
                 'status' => 'assigned'
             ]);
 
-            // Catat riwayat
+            // Catat riwayat beserta info prioritasnya
             $report->histories()->create([
                 'changed_by' => $request->user()->id,
                 'from_status' => 'verified',
                 'to_status' => 'in_progress',
-                'notes' => 'Laporan diteruskan ke petugas lapangan.'
+                'notes' => 'Laporan diteruskan ke petugas lapangan. Prioritas: ' . strtoupper($validated['priority'])
             ]);
 
             DB::commit();
@@ -114,7 +121,7 @@ class ReportController extends Controller
             // ==========================================
             // KIRIM FCM NOTIFICATION KE PETUGAS
             // ==========================================
-            $petugas = User::find($request->petugas_id);
+            $petugas = User::find($validated['petugas_id']);
 
             if ($petugas && $petugas->fcm_token) {
                 try {
@@ -123,8 +130,8 @@ class ReportController extends Controller
                     $message = CloudMessage::new()
                         ->withToken($petugas->fcm_token)
                         ->withNotification(Notification::create(
-                            '🚨 Tugas Perbaikan Baru!',
-                            'Ada tugas perbaikan ' . strtoupper($report->type) . ' di ' . $report->alamat_lengkap . '. Silakan cek aplikasi.'
+                            '🚨 Tugas Baru! (' . strtoupper($validated['priority']) . ')', // Tambahkan info prioritas di Judul Notif
+                            'Tugas perbaikan ' . strtoupper($report->type) . ' di ' . $report->alamat_lengkap . '.'
                         ));
 
                     $messaging->send($message);
@@ -135,15 +142,15 @@ class ReportController extends Controller
 
             $petugas->notifications()->create([
                 'id' => \Illuminate\Support\Str::uuid(),
-                'type' => 'App\Notifications\Assignment', // Penanda tipe notifikasi
+                'type' => 'App\Notifications\Assignment',
                 'data' => [
-                    'title' => 'Tugas Perbaikan Baru',
+                    'title' => 'Tugas Baru (' . strtoupper($validated['priority']) . ')',
                     'body' => 'Ada tugas perbaikan di ' . $report->alamat_lengkap,
-                    'type' => 'assignment' // Ini untuk ikon di React Native nanti
+                    'type' => 'assignment'
                 ],
             ]);
 
-            return redirect()->back()->with('success', 'Petugas berhasil ditugaskan.');
+            return redirect()->back()->with('success', 'Petugas berhasil ditugaskan dengan prioritas ' . strtoupper($validated['priority']) . '.');
 
         } catch (\Exception $e) {
             DB::rollBack();

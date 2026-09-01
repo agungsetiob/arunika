@@ -199,15 +199,17 @@ export default function Index({ reports, filters }: Props) {
                                         </td>
                                         
                                         <td className="px-6 py-4 text-center">
-                                            <Link
-                                                href={route('admin.reports.show', report.id)}
-                                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 bg-white border border-slate-200 hover:text-orange-600 hover:border-orange-200 hover:bg-orange-50 transition-all shadow-sm"
-                                                title="Lihat Detail"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Link>
+                                            <div className="flex justify-center gap-1">
+                                                <Link
+                                                    href={route('admin.reports.show', report.id)}
+                                                    className="p-2 rounded-xl text-orange-600 hover:bg-orange-100 transition-colors"
+                                                    title="Lihat Detail"
+                                                >
+                                                    <Eye size={18} />
+                                                </Link>
+                                            </div>
                                         </td>
-                                        
+                                                                                
                                     </tr>
                                 ))
                             )}

@@ -189,15 +189,14 @@ export default function Index({ lampPosts, filters }: Props) {
                                             </span>
                                         </td>
                                         
-                                        {/* Aksi (Edit & Delete) */}
                                         <td className="px-6 py-4 text-center">
-                                            <div className="flex items-center justify-center gap-2">
+                                            <div className="flex justify-center gap-1">
                                                 <Link
                                                     href={route('admin.lamp-posts.edit', lamp.id)}
-                                                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 bg-white border border-blue-200 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50 transition-all shadow-sm"
+                                                    className="p-2 rounded-xl text-sky-600 hover:bg-sky-100 transition-colors"
                                                     title="Edit Data"
                                                 >
-                                                    <Edit className="h-4 w-4" />
+                                                    <Edit size={18} />
                                                 </Link>
                                                 
                                                 <button
@@ -205,10 +204,10 @@ export default function Index({ lampPosts, filters }: Props) {
                                                         setLampToDelete(lamp.id);
                                                         setIsDeleteModalOpen(true);
                                                     }}
-                                                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 bg-white border border-red-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all shadow-sm"
+                                                    className="p-2 rounded-xl text-red-600 hover:bg-red-100 transition-colors"
                                                     title="Hapus Data"
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash2 size={18} />
                                                 </button>
                                             </div>
                                         </td>

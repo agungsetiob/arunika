@@ -6,23 +6,23 @@ import { useState } from 'react';
 import { 
     ArrowLeft, MapPin, Camera, User, 
     CheckCircle2, XCircle, Wrench, Clock, 
-    FileText, Zap, ShieldAlert
+    FileText, Zap, ShieldAlert, AlertTriangle
 } from 'lucide-react';
 
-import ConfirmModal from '@/Components/ConfirmModal'; // Tambahkan Import Modal
+import ConfirmModal from '@/Components/ConfirmModal'; 
 
 export default function Show({ report, petugas }: any) {
+    // 1. Tambahkan state priority di useForm
     const { data, setData, post, processing } = useForm({
         notes: '',
-        petugas_id: ''
+        petugas_id: '',
+        priority: 'medium' // Default prioritas
     });
 
-    // States untuk masing-masing Modal
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
-    // Helper warna status
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
             pending: 'bg-red-50 text-red-600 border border-red-100',
@@ -35,7 +35,18 @@ export default function Show({ report, petugas }: any) {
         return styles[status] || 'bg-slate-50 text-slate-600 border border-slate-200';
     };
 
-    // Fungsi Eksekusi (Hanya dipanggil dari dalam Modal)
+    // Helper warna prioritas
+    const getPriorityBadge = (priority: string) => {
+        if (!priority) return '';
+        const styles: Record<string, string> = {
+            low: 'bg-slate-100 text-slate-600 border border-slate-200',
+            medium: 'bg-blue-50 text-blue-600 border border-blue-200',
+            high: 'bg-orange-50 text-orange-600 border border-orange-200',
+            emergency: 'bg-red-50 text-red-600 border border-red-200 shadow-sm',
+        };
+        return styles[priority] || 'bg-slate-100 text-slate-600 border border-slate-200';
+    };
+
     const executeVerify = () => {
         post(route('admin.reports.verify', report.id), {
             onSuccess: () => setIsVerifyModalOpen(false)
@@ -54,10 +65,8 @@ export default function Show({ report, petugas }: any) {
         });
     };
 
-    // Fungsi Mencegah Form Submit Bawaan dan Membuka Modal
     const handleRejectClick = (e: React.SyntheticEvent) => {
         e.preventDefault();
-        // Validasi textarea tidak kosong sebelum buka modal
         if (!data.notes.trim()) {
             alert('Silakan isi alasan penolakan terlebih dahulu.');
             return;
@@ -67,7 +76,6 @@ export default function Show({ report, petugas }: any) {
 
     const handleAssignClick = (e: React.SyntheticEvent) => {
         e.preventDefault();
-        // Validasi pilihan petugas tidak kosong sebelum buka modal
         if (!data.petugas_id) {
             alert('Silakan pilih petugas terlebih dahulu.');
             return;
@@ -114,9 +122,18 @@ export default function Show({ report, petugas }: any) {
                                         <span>Dilaporkan oleh <span className="font-bold text-slate-700">{report.user.name}</span> ({report.user.phone})</span>
                                     </div>
                                 </div>
-                                <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider ${getStatusBadge(report.status)}`}>
-                                    {report.status.replace('_', ' ')}
-                                </span>
+                                
+                                {/* Tampilan Status & Prioritas di Kanan Atas */}
+                                <div className="flex flex-col items-start sm:items-end gap-2">
+                                    <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider ${getStatusBadge(report.status)}`}>
+                                        {report.status.replace('_', ' ')}
+                                    </span>
+                                    {report.priority && (
+                                        <span className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${getPriorityBadge(report.priority)}`}>
+                                            <AlertTriangle size={12} /> Prioritas: {report.priority}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Deskripsi */}
@@ -198,8 +215,6 @@ export default function Show({ report, petugas }: any) {
                             {/* JIKA STATUS PENDING -> Verifikasi / Tolak */}
                             {report.status === 'pending' && (
                                 <div className="space-y-4">
-                                    
-                                    {/* Tombol Verifikasi Langsung (Buka Modal) */}
                                     <button 
                                         type="button"
                                         onClick={() => setIsVerifyModalOpen(true)}
@@ -209,7 +224,6 @@ export default function Show({ report, petugas }: any) {
                                         <CheckCircle2 className="w-5 h-5" /> Verifikasi Laporan
                                     </button>
 
-                                    {/* Form Tolak Laporan (Diperlukan Input Alasan) */}
                                     <form onSubmit={handleRejectClick} className="bg-red-50 p-4 rounded-xl border border-red-100 mt-4">
                                         <div>
                                             <label className="text-sm font-bold text-red-700 mb-1 block">Tolak Laporan (Alasan)</label>
@@ -226,26 +240,44 @@ export default function Show({ report, petugas }: any) {
                                             <XCircle className="w-4 h-4" /> Tolak Tiket Ini
                                         </button>
                                     </form>
-
                                 </div>
                             )}
 
                             {/* JIKA STATUS VERIFIED -> Tugaskan Petugas */}
                             {report.status === 'verified' && (
                                 <form onSubmit={handleAssignClick} className="space-y-4">
-                                    <div className="bg-sky-50 p-4 rounded-xl border border-sky-100 mb-4">
-                                        <p className="text-xs text-sky-700 font-medium mb-3">Laporan valid. Silakan pilih petugas lapangan untuk mengeksekusi perbaikan.</p>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Pilih Petugas:</label>
-                                        <select 
-                                            required
-                                            className="w-full rounded-lg border-slate-200 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm bg-white"
-                                            value={data.petugas_id} onChange={e => setData('petugas_id', e.target.value)}
-                                        >
-                                            <option value="">-- Pilih Tim Lapangan --</option>
-                                            {petugas.map((p: any) => (
-                                                <option key={p.id} value={p.id}>{p.name}</option>
-                                            ))}
-                                        </select>
+                                    <div className="bg-sky-50 p-4 rounded-xl border border-sky-100 mb-4 space-y-4">
+                                        <p className="text-xs text-sky-700 font-medium leading-relaxed">Laporan valid. Silakan tentukan prioritas dan pilih petugas lapangan.</p>
+                                        
+                                        {/* Dropdown Prioritas */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1.5">Tingkat Prioritas:</label>
+                                            <select 
+                                                required
+                                                className="w-full rounded-lg border-slate-200 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm bg-white font-medium"
+                                                value={data.priority} onChange={e => setData('priority', e.target.value)}
+                                            >
+                                                <option value="low">Rendah (Low)</option>
+                                                <option value="medium">Menengah (Medium)</option>
+                                                <option value="high">Tinggi (High)</option>
+                                                <option value="emergency">Darurat (Emergency)</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Dropdown Petugas */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1.5">Pilih Petugas:</label>
+                                            <select 
+                                                required
+                                                className="w-full rounded-lg border-slate-200 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm bg-white"
+                                                value={data.petugas_id} onChange={e => setData('petugas_id', e.target.value)}
+                                            >
+                                                <option value="">-- Pilih Tim Lapangan --</option>
+                                                {petugas.map((p: any) => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
                                     <button 
                                         type="submit" disabled={processing || !data.petugas_id}
@@ -268,9 +300,11 @@ export default function Show({ report, petugas }: any) {
                                     <p className="text-lg font-black text-slate-800 uppercase tracking-widest">{report.status.replace('_', ' ')}</p>
                                     
                                     {report.assignment && (
-                                        <div className="mt-4 pt-4 border-t border-slate-200">
-                                            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Ditugaskan Kepada</p>
-                                            <p className="text-sm font-bold text-slate-800">{report.assignment.petugas?.name || 'Tidak diketahui'}</p>
+                                        <div className="mt-4 pt-4 border-t border-slate-200 flex flex-col gap-2 text-left">
+                                            <div>
+                                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Ditugaskan Kepada</p>
+                                                <p className="text-sm font-bold text-slate-800">{report.assignment.petugas?.name || 'Tidak diketahui'}</p>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -319,8 +353,6 @@ export default function Show({ report, petugas }: any) {
             </div>
 
             {/* KUMPULAN MODAL KONFIRMASI */}
-
-            {/* Modal Verifikasi */}
             <ConfirmModal 
                 isOpen={isVerifyModalOpen}
                 title="Verifikasi Laporan Masuk"
@@ -331,7 +363,6 @@ export default function Show({ report, petugas }: any) {
                 onConfirm={executeVerify}
             />
 
-            {/* Modal Penolakan */}
             <ConfirmModal 
                 isOpen={isRejectModalOpen}
                 title="Konfirmasi Penolakan"
@@ -342,11 +373,10 @@ export default function Show({ report, petugas }: any) {
                 onConfirm={executeReject}
             />
 
-            {/* Modal Tugaskan Petugas */}
             <ConfirmModal 
                 isOpen={isAssignModalOpen}
                 title="Tugaskan Petugas"
-                message="Kirim notifikasi tugas perbaikan ini ke aplikasi mobile Petugas yang Anda pilih? Mereka harus segera merespons tugas ini."
+                message={`Kirim notifikasi tugas perbaikan ini ke aplikasi mobile Petugas dengan prioritas ${data.priority}?`}
                 confirmText="Kirim Tugas"
                 confirmColor="blue"
                 onCancel={() => setIsAssignModalOpen(false)}

@@ -14,6 +14,7 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'email' => 'required|string|email|unique:users,email|max:255',
             'phone' => 'required|string|unique:users,phone|max:20',
             'nik' => 'required|string|unique:users,nik|size:16',
             'password' => 'required|string|min:6',
@@ -21,6 +22,7 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $validated['name'],
+            'email' => $validated['email'],
             'phone' => $validated['phone'],
             'nik' => $validated['nik'],
             'password' => Hash::make($validated['password']),
@@ -53,6 +55,10 @@ class AuthController extends Controller
             ]);
         }
 
+        if (!$user->is_active) {
+            return response()->json(['message' => 'Akun Anda telah dinonaktifkan.'], 403);
+        }
+
         // Simpan/Update FCM token jika dikirim dari mobile
         if ($request->has('fcm_token')) {
             $user->update(['fcm_token' => $request->fcm_token]);
@@ -76,7 +82,7 @@ class AuthController extends Controller
             'message' => 'Logout berhasil'
         ]);
     }
-    
+
     public function me(Request $request)
     {
         return response()->json([

@@ -25,7 +25,7 @@ class ReportSeeder extends Seeder
                 'lat' => $faker->latitude(-3.45, -3.44),
                 'lng' => $faker->longitude(116.00, 116.01),
                 'alamat_lengkap' => $faker->address,
-                'status' => $faker->randomElement(['pending', 'verified', 'in_progress', 'completed', 'rejected']),
+                'status' => $faker->randomElement(['pending', 'verified']),
                 'priority' => $faker->randomElement(['low', 'medium', 'high', 'emergency']),
                 'created_at' => now(),
                 'updated_at' => now(),

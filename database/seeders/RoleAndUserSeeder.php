@@ -23,6 +23,7 @@ class RoleAndUserSeeder extends Seeder
             'name' => 'Admin Dinas',
             'phone' => '081100000001',
             'nik' => '1234567890123451',
+            'is_active' => true,
             'password' => Hash::make('password123'), 
         ]);
         $admin->assignRole($adminRole);
@@ -34,6 +35,7 @@ class RoleAndUserSeeder extends Seeder
             'name' => 'Petugas Reaksi Cepat',
             'phone' => '081100000002',
             'nik' => '1234567890123456',
+            'is_active' => true,
             'password' => Hash::make('password123'),
         ]);
         $petugas->assignRole($petugasRole);
@@ -45,6 +47,7 @@ class RoleAndUserSeeder extends Seeder
             'name' => 'Budi Warga',
             'phone' => '081100000003',
             'nik' => '6543210987654321',
+            'is_active' => true,
             'password' => Hash::make('password123'),
         ]);
         $warga->assignRole($wargaRole);
