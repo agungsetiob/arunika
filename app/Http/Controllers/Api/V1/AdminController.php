@@ -125,10 +125,11 @@ class AdminController extends Controller
             if ($petugas && $petugas->fcm_token) {
                 try {
                     $messaging = Firebase::messaging();
-                    $message = CloudMessage::withTarget('token', $petugas->fcm_token)
+                    $message = CloudMessage::new()
+                        ->withToken($petugas->fcm_token)
                         ->withNotification(Notification::create(
-                            '🚨 Tugas Perbaikan Baru!', // Judul Notifikasi
-                            'Ada tugas perbaikan di ' . $report->alamat_lengkap . '. Silakan cek aplikasi.' // Isi lebih informatif
+                            '🚨 Tugas Perbaikan Baru!',
+                            'Ada tugas perbaikan di ' . $report->alamat_lengkap . '. Silakan cek aplikasi.'
                         ));
 
                     $messaging->send($message);

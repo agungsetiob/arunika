@@ -116,14 +116,15 @@ class ReportController extends Controller
             // ==========================================
             $petugas = User::find($request->petugas_id);
 
-            // Jika petugas punya token FCM di HP-nya, tembak notifikasi!
             if ($petugas && $petugas->fcm_token) {
                 try {
                     $messaging = Firebase::messaging();
-                    $message = CloudMessage::withTarget('token', $petugas->fcm_token)
+
+                    $message = CloudMessage::new()
+                        ->withToken($petugas->fcm_token)
                         ->withNotification(Notification::create(
-                            '🚨 Tugas Perbaikan Baru!', // Judul Notifikasi
-                            'Ada tugas perbaikan ' . strtoupper($report->type) . ' di ' . $report->alamat_lengkap . '. Silakan cek aplikasi.' 
+                            '🚨 Tugas Perbaikan Baru!',
+                            'Ada tugas perbaikan ' . strtoupper($report->type) . ' di ' . $report->alamat_lengkap . '. Silakan cek aplikasi.'
                         ));
 
                     $messaging->send($message);

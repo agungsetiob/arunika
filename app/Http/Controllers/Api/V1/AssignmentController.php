@@ -9,6 +9,7 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AssignmentController extends Controller
 {
@@ -104,7 +105,8 @@ class AssignmentController extends Controller
                     try {
                         $messaging = Firebase::messaging();
 
-                        $message = CloudMessage::withTarget('token', $warga->fcm_token)
+                        $message = CloudMessage::new()
+                            ->withToken($warga->fcm_token)
                             ->withNotification(Notification::create(
                                 '✅ Laporan Selesai Diperbaiki!',
                                 'Laporan ' . strtoupper($report->type) . ' di ' . $report->alamat_lengkap . ' telah selesai ditangani. Terima kasih atas laporan Anda!'
@@ -113,7 +115,7 @@ class AssignmentController extends Controller
                         $messaging->send($message);
                     } catch (\Exception $e) {
                         // Log error FCM tapi JANGAN gagalkan transaksi DB
-                        \Log::error('FCM Error (Petugas ke Warga): ' . $e->getMessage());
+                        Log::error('FCM Error (Petugas ke Warga): ' . $e->getMessage());
                     }
                 }
                 // ==========================================
