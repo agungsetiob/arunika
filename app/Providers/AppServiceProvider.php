@@ -8,6 +8,10 @@ use App\Repositories\Contracts\LampPostRepositoryInterface;
 use App\Repositories\LampPostRepository;
 use App\Repositories\Contracts\ReportRepositoryInterface;
 use App\Repositories\ReportRepository;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\UserRepository;
+use App\Repositories\Contracts\AssignmentRepositoryInterface;
+use App\Repositories\AssignmentRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +28,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             ReportRepositoryInterface::class,
             ReportRepository::class
+        );
+
+        $this->app->bind(
+            UserRepositoryInterface::class,
+            UserRepository::class
+        );
+
+        $this->app->bind(
+            AssignmentRepositoryInterface::class,
+            AssignmentRepository::class
         );
     }
 
