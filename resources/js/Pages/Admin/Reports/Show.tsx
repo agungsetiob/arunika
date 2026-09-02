@@ -1,27 +1,36 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { 
     ArrowLeft, MapPin, Camera, User, 
     CheckCircle2, XCircle, Wrench, Clock, 
-    FileText, Zap, ShieldAlert, AlertTriangle
+    FileText, Zap, ShieldAlert, AlertTriangle,
+    Settings
 } from 'lucide-react';
 
-import ConfirmModal from '@/Components/ConfirmModal'; 
+import ConfirmModal from '@/Components/ConfirmModal';
+import SearchableSelect from '@/Components/SearchableSelect';
 
 export default function Show({ report, petugas }: any) {
-    // 1. Tambahkan state priority di useForm
     const { data, setData, post, processing } = useForm({
         notes: '',
         petugas_id: '',
-        priority: 'medium' // Default prioritas
+        priority: 'medium'
     });
 
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+
+    const handleSearchPetugas = useCallback((searchTerm: string) => {
+        router.reload({
+            data: { search: searchTerm },
+            only: ['petugas'],
+        });
+    }, []);
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
@@ -35,7 +44,6 @@ export default function Show({ report, petugas }: any) {
         return styles[status] || 'bg-slate-50 text-slate-600 border border-slate-200';
     };
 
-    // Helper warna prioritas
     const getPriorityBadge = (priority: string) => {
         if (!priority) return '';
         const styles: Record<string, string> = {
@@ -68,7 +76,7 @@ export default function Show({ report, petugas }: any) {
     const handleRejectClick = (e: React.SyntheticEvent) => {
         e.preventDefault();
         if (!data.notes.trim()) {
-            alert('Silakan isi alasan penolakan terlebih dahulu.');
+            setIsAlertModalOpen(true);
             return;
         }
         setIsRejectModalOpen(true);
@@ -77,7 +85,7 @@ export default function Show({ report, petugas }: any) {
     const handleAssignClick = (e: React.SyntheticEvent) => {
         e.preventDefault();
         if (!data.petugas_id) {
-            alert('Silakan pilih petugas terlebih dahulu.');
+            setIsAlertModalOpen(true);
             return;
         }
         setIsAssignModalOpen(true);
@@ -105,7 +113,7 @@ export default function Show({ report, petugas }: any) {
             <div className="py-2">
                 <div className="mx-auto max-w-8xl sm:px-4 lg:px-2 grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
-                    {/* KOLOM KIRI: Informasi Utama & Peta */}
+                    {/* Informasi Utama & Peta */}
                     <div className="lg:col-span-2 space-y-6">
                         
                         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 lg:p-8">
@@ -202,7 +210,7 @@ export default function Show({ report, petugas }: any) {
                         </div>
                     </div>
 
-                    {/* KOLOM KANAN: Action & Timeline */}
+                    {/* Action & Timeline */}
                     <div className="space-y-6">
                         
                         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
@@ -229,13 +237,13 @@ export default function Show({ report, petugas }: any) {
                                             <label className="text-sm font-bold text-red-700 mb-1 block">Tolak Laporan (Alasan)</label>
                                             <textarea 
                                                 className="w-full rounded-lg border-red-200 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm bg-white"
-                                                rows={2} required placeholder="Sebutkan alasannya..."
+                                                rows={2} placeholder="Sebutkan alasannya..."
                                                 value={data.notes} onChange={e => setData('notes', e.target.value)}
                                             ></textarea>
                                         </div>
                                         <button 
                                             type="submit" disabled={processing} 
-                                            className="w-full mt-3 flex items-center justify-center gap-2 bg-white border border-red-500 text-red-600 hover:bg-red-600 hover:text-white py-2 px-4 rounded-lg text-sm font-bold transition-all"
+                                            className="w-full mt-3 flex items-center justify-center gap-2 bg-white border border-red-500 text-red-600 hover:bg-red-600 hover:text-white py-2 px-4 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
                                         >
                                             <XCircle className="w-4 h-4" /> Tolak Tiket Ini
                                         </button>
@@ -249,7 +257,7 @@ export default function Show({ report, petugas }: any) {
                                     <div className="bg-sky-50 p-4 rounded-xl border border-sky-100 mb-4 space-y-4">
                                         <p className="text-xs text-sky-700 font-medium leading-relaxed">Laporan valid. Silakan tentukan prioritas dan pilih petugas lapangan.</p>
                                         
-                                        {/* Dropdown Prioritas */}
+                                        {/* Dropdown Prioritas (Tetap native karena opsi statis sedikit) */}
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-1.5">Tingkat Prioritas:</label>
                                             <select 
@@ -264,26 +272,25 @@ export default function Show({ report, petugas }: any) {
                                             </select>
                                         </div>
 
-                                        {/* Dropdown Petugas */}
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-1.5">Pilih Petugas:</label>
-                                            <select 
-                                                required
-                                                className="w-full rounded-lg border-slate-200 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm bg-white"
-                                                value={data.petugas_id} onChange={e => setData('petugas_id', e.target.value)}
-                                            >
-                                                <option value="">-- Pilih Tim Lapangan --</option>
-                                                {petugas.map((p: any) => (
-                                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                                ))}
-                                            </select>
+                                            <SearchableSelect 
+                                                options={petugas}
+                                                value={data.petugas_id}
+                                                onChange={(val) => setData('petugas_id', val.toString())}
+                                                onSearch={handleSearchPetugas}
+                                                placeholder="-- Pilih Petugas --"
+                                            />
                                         </div>
                                     </div>
                                     <button 
                                         type="submit" disabled={processing || !data.petugas_id}
                                         className="w-full flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700 text-white py-3 px-4 rounded-xl font-bold transition-all shadow-md shadow-sky-600/20 disabled:opacity-50 disabled:bg-slate-300"
                                     >
-                                        <Wrench className="w-5 h-5" /> Tugaskan Sekarang
+                                        <Settings
+                                            className={`w-5 h-5 transition-transform ${processing ? 'animate-spin' : ''}`}
+                                            aria-hidden="true"
+                                        /> Tugaskan Sekarang
                                     </button>
                                 </form>
                             )}
@@ -359,6 +366,9 @@ export default function Show({ report, petugas }: any) {
                 message="Apakah Anda yakin laporan ini valid dan siap diproses? Tiket ini akan masuk ke antrean tugas (Verified)."
                 confirmText="Ya, Verifikasi"
                 confirmColor="emerald"
+                isLoading={processing}
+                loadingText="Memverifikasi..."
+                loadingIcon="Loader"
                 onCancel={() => setIsVerifyModalOpen(false)}
                 onConfirm={executeVerify}
             />
@@ -369,8 +379,12 @@ export default function Show({ report, petugas }: any) {
                 message={`Anda akan menolak tiket ini dengan alasan: "${data.notes}". Tiket akan ditutup secara permanen. Lanjutkan?`}
                 confirmText="Ya, Tolak Tiket"
                 confirmColor="red"
+                isLoading={processing}
+                loadingText="Menolak Tiket..."
+                loadingIcon="AlertTriangle"
                 onCancel={() => setIsRejectModalOpen(false)}
                 onConfirm={executeReject}
+                variant="confirm"
             />
 
             <ConfirmModal 
@@ -379,8 +393,22 @@ export default function Show({ report, petugas }: any) {
                 message={`Kirim notifikasi tugas perbaikan ini ke aplikasi mobile Petugas dengan prioritas ${data.priority}?`}
                 confirmText="Kirim Tugas"
                 confirmColor="blue"
+                isLoading={processing}
+                loadingText="Menugaskan..."
+                loadingIcon="Loader"
                 onCancel={() => setIsAssignModalOpen(false)}
                 onConfirm={executeAssign}
+                variant="confirm"
+            />
+
+            <ConfirmModal 
+                isOpen={isAlertModalOpen}
+                title="Peringatan"
+                message={`Isi alasan penolakan atau pilih petugas terlebih dahulu.`}
+                confirmText="Ya, Mengerti"
+                confirmColor="blue"
+                onCancel={() => setIsAlertModalOpen(false)}
+                variant="alert"
             />
 
         </AuthenticatedLayout>

@@ -1,14 +1,18 @@
-import { AlertTriangle } from 'lucide-react';
-import Modal from '@/Components/Modal';
+import { AlertTriangle, Loader } from "lucide-react";
+import Modal from "@/Components/Modal";
 
 interface Props {
     isOpen: boolean;
     title: string;
     message: string;
-    onConfirm: () => void;
+    onConfirm?: () => void;
     onCancel: () => void;
     confirmText?: string;
-    confirmColor?: 'red' | 'blue' | 'emerald' | 'orange';
+    confirmColor?: "red" | "blue" | "emerald" | "orange";
+    isLoading?: boolean;
+    loadingText?: string;
+    loadingIcon?: "Loader" | "AlertTriangle";
+    variant?: "confirm" | "alert";
 }
 
 export default function ConfirmModal({
@@ -17,14 +21,28 @@ export default function ConfirmModal({
     message,
     onConfirm,
     onCancel,
-    confirmText = 'Ya, Lanjutkan',
-    confirmColor = 'red',
+    confirmText = "Ya, Lanjutkan",
+    confirmColor = "red",
+    isLoading = false,
+    loadingText = "Memproses...",
+    loadingIcon = "Loader",
+    variant = "confirm",
 }: Props) {
     const colorClasses = {
-        red: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
-        blue: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
-        emerald: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500',
-        orange: 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-500',
+        red: "bg-red-600 hover:bg-red-700 focus:ring-red-500",
+        blue: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500",
+        emerald: "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500",
+        orange: "bg-orange-600 hover:bg-orange-700 focus:ring-orange-500",
+    };
+
+    const IconComponent = loadingIcon === "Loader" ? Loader : AlertTriangle;
+
+    const handlePrimary = () => {
+        if (variant === "confirm") {
+            if (onConfirm) onConfirm();
+        } else {
+            onCancel();
+        }
     };
 
     return (
@@ -33,9 +51,9 @@ export default function ConfirmModal({
                 <div className="flex items-start gap-4">
                     <div
                         className={`p-3 rounded-full shrink-0 ${
-                            confirmColor === 'red'
-                                ? 'bg-red-50 text-red-600'
-                                : 'bg-orange-50 text-orange-600'
+                            confirmColor === "red"
+                                ? "bg-red-50 text-red-600"
+                                : "bg-orange-50 text-orange-600"
                         }`}
                     >
                         <AlertTriangle className="w-6 h-6" />
@@ -51,18 +69,27 @@ export default function ConfirmModal({
                 </div>
             </div>
 
-            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="px-6 py-4 flex items-center justify-end gap-3">
                 <button
                     onClick={onCancel}
-                    className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+                    disabled={isLoading}
+                    className={`px-4 py-3 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50 ${variant === "alert" ? 'hidden' : ''}`}
                 >
                     Batal
                 </button>
                 <button
-                    onClick={onConfirm}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold text-white shadow-sm transition-colors ${colorClasses[confirmColor]}`}
+                    onClick={handlePrimary}
+                    disabled={isLoading}
+                    className={`px-4 py-3 rounded-xl text-sm font-bold text-white shadow-sm transition-colors flex items-center gap-2 ${colorClasses[confirmColor]} disabled:opacity-50`}
                 >
-                    {confirmText}
+                    {isLoading ? (
+                        <>
+                            <IconComponent className="w-4 h-4 animate-spin" />
+                            {loadingText}
+                        </>
+                    ) : (
+                        confirmText
+                    )}
                 </button>
             </div>
         </Modal>

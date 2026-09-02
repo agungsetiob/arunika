@@ -13,10 +13,10 @@ class ReportSeeder extends Seeder
         $faker = Faker::create('id_ID');
         $reports = [];
 
-        for ($i = 1; $i <= 30; $i++) {
+        for ($i = 1; $i <= 130; $i++) {
             $reports[] = [
-                'user_id' => $faker->numberBetween(1, 3), // asumsi ada user id 1-5
-                'lamp_post_id' => $faker->numberBetween(1, 30),
+                'user_id' => $faker->numberBetween(3, 30), // asumsi ada user id 3-30
+                'lamp_post_id' => $faker->numberBetween(1, 150),
                 'type' => $faker->randomElement(['pju', 'traffic_light']),
                 'damage_category' => $faker->randomElement([
                     'mati_total', 'redup', 'tiang_miring_roboh', 'kabel_menjuntai', 'lampu_kedip'

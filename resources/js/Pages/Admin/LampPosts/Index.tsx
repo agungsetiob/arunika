@@ -36,6 +36,7 @@ export default function Index({ lampPosts, filters }: Props) {
     const isFirstRender = useRef(true);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [lampToDelete, setLampToDelete] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (isFirstRender.current) {
@@ -184,7 +185,7 @@ export default function Index({ lampPosts, filters }: Props) {
                                         
                                         {/* Status */}
                                         <td className="px-6 py-4 text-center">
-                                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${getStatusBadge(lamp.status_lampu)}`}>
+                                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusBadge(lamp.status_lampu)}`}>
                                                 {lamp.status_lampu}
                                             </span>
                                         </td>
@@ -259,18 +260,24 @@ export default function Index({ lampPosts, filters }: Props) {
                     message="Apakah Anda yakin ingin menghapus data tiang/lampu ini? Tindakan ini tidak dapat dibatalkan dan akan mempengaruhi laporan terkait."
                     confirmText="Ya, Hapus Data"
                     confirmColor="red"
+                    isLoading={isDeleting}
+                    loadingText="Menghapus..."
+                    loadingIcon="Loader"
                     onCancel={() => {
                         setIsDeleteModalOpen(false);
                         setLampToDelete(null);
                     }}
                     onConfirm={() => {
                         if (lampToDelete) {
+                            setIsDeleting(true);
                             router.delete(route('admin.lamp-posts.destroy', lampToDelete), {
                                 preserveScroll: true,
                                 onSuccess: () => {
+                                    setIsDeleting(false);
                                     setIsDeleteModalOpen(false);
                                     setLampToDelete(null);
-                                }
+                                },
+                                onError: () => setIsDeleting(false),
                             });
                         }
                     }}

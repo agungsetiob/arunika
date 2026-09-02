@@ -14,15 +14,15 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            // Pastikan nomor HP unik, kecuali untuk milik user itu sendiri
-            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'phone' => ['required', 'regex:/^08[0-9]{8,11}$/', 'unique:users,phone,' . $user->id],
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'nik' => ['required', 'digits:16', 'unique:users,nik,' . $user->id],
             'password' => 'nullable|string|min:6',
         ]);
 
         $user->name = $validated['name'];
         $user->phone = $validated['phone'];
 
-        // Update password hanya jika kolom password diisi
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }

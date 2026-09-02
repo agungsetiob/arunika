@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { UserPlus, CheckCircle, XCircle, Power, Edit, Search, Users } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import UserFormModal from '@/Components/UserFormModal';
@@ -38,10 +38,11 @@ interface Props {
 }
 
 export default function Index({ users, filters }: Props) {
-  const { flash } = usePage<any>().props;
   const [activeRoleFilter, setActiveRoleFilter] = useState(filters.role || '');
   const [search, setSearch] = useState(filters.search || '');
   const isFirstRender = useRef(true);
+  const toggleStatusForm = useForm({});
+  const { processing } = toggleStatusForm;
   
   // State untuk mengontrol Modal Form (Tambah/Edit)
   const [modalState, setModalState] = useState<{
@@ -88,14 +89,22 @@ export default function Index({ users, filters }: Props) {
     return () => clearTimeout(delay);
   }, [search, activeRoleFilter]);
 
-  // Fungsi untuk mengeksekusi aksi setelah Modal Konfirmasi disetujui
   const executeToggleStatus = () => {
-    if (confirmModal.user) {
-      router.patch(route('admin.users.toggle-status', confirmModal.user.id), {}, { 
+    if (!confirmModal.user) return;
+
+    toggleStatusForm.patch(
+      route('admin.users.toggle-status', confirmModal.user.id),
+      {
         preserveScroll: true,
-        onSuccess: () => setConfirmModal({ isOpen: false, user: null })
-      });
-    }
+
+        onSuccess: () => {
+          setConfirmModal({
+            isOpen: false,
+            user: null,
+          });
+        },
+      }
+    );
   };
 
   return (
@@ -276,7 +285,6 @@ export default function Index({ users, filters }: Props) {
           </div>
         )}
 
-        {/* Modal Form Tambah/Edit */}
         <UserFormModal
           isOpen={modalState.isOpen}
           onClose={() => setModalState({ ...modalState, isOpen: false })}
@@ -284,13 +292,18 @@ export default function Index({ users, filters }: Props) {
           user={modalState.user}
         />
 
-        {/* Modal Konfirmasi (Pengganti confirm bawaan) */}
         <ConfirmModal 
           isOpen={confirmModal.isOpen}
           title={confirmModal.user?.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"}
           message={`Apakah Anda yakin ingin ${confirmModal.user?.is_active ? 'menonaktifkan' : 'mengaktifkan'} akun milik ${confirmModal.user?.name}? ${confirmModal.user?.is_active ? 'Pengguna ini tidak akan bisa login ke dalam aplikasi.' : ''}`}
           confirmText={confirmModal.user?.is_active ? "Ya, Nonaktifkan" : "Ya, Aktifkan"}
           confirmColor={confirmModal.user?.is_active ? "red" : "emerald"}
+          isLoading={processing}
+          loadingText={confirmModal.user?.is_active
+              ? "Menonaktifkan..."
+              : "Mengaktifkan..."
+          }
+          loadingIcon="Loader"
           onCancel={() => setConfirmModal({ isOpen: false, user: null })}
           onConfirm={executeToggleStatus}
         />

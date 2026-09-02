@@ -13,7 +13,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $roleFilter = $request->query('role');
-        $search = $request->query('search'); // Tangkap keyword pencarian
+        $search = $request->query('search');
 
         $users = User::with('roles')
             ->when($roleFilter, function ($query) use ($roleFilter) {
@@ -36,13 +36,13 @@ class UserController extends Controller
             ])
             ->latest()
             ->paginate(10)
-            ->withQueryString(); // Pastikan query string tetap dibawa saat pindah halaman
+            ->withQueryString();
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
             'filters' => [
                 'role' => $roleFilter,
-                'search' => $search, // Kirim kembali ke FE agar input text tidak hilang
+                'search' => $search,
             ],
         ]);
     }
@@ -52,10 +52,10 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'required|string|unique:users,phone|max:20',
+            'phone' => ['required', 'regex:/^08[0-9]{8,11}$/', 'unique:users,phone'],
             'password' => 'required|string|min:8',
             'role' => 'required|in:petugas,admin',
-            'nik' => 'required|string|max:16',
+            'nik' => ['required', 'digits:16', 'unique:users,nik'],
         ]);
 
         $user = User::create([
@@ -76,10 +76,10 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id, // Abaikan email sendiri
-            'phone' => 'required|string|unique:users,phone,' . $user->id . '|max:20', // Abaikan phone sendiri
-            'password' => 'nullable|string|min:8', // Password opsional saat edit
-            'nik' => 'required|string|max:16', // NIK wajib diisi saat edit
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => ['required', 'regex:/^08[0-9]{8,11}$/', 'unique:users,phone,' . $user->id],
+            'password' => 'nullable|string|min:8',
+            'nik' => ['required', 'digits:16', 'unique:users,nik,' . $user->id],
         ]);
 
         $user->name = $validated['name'];
