@@ -25,6 +25,7 @@ Route::prefix('v1')->group(function () {
         // Warga: Laporan
         Route::get('/reports/me', [ReportController::class, 'myReports']);
         Route::post('/reports', [ReportController::class, 'store']);
+        Route::get('/reports/map', [ReportController::class, 'publicMapData']);
         Route::get('/reports/{id}', [ReportController::class, 'show']);
         Route::get('/lamp-posts/nearby', [LampPostController::class, 'nearby']);
 

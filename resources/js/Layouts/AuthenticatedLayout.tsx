@@ -11,7 +11,8 @@ import {
     User,
     X,
     CheckCircle2,
-    XCircle
+    XCircle,
+    Award
 } from 'lucide-react';
 
 export default function Authenticated({
@@ -49,6 +50,7 @@ export default function Authenticated({
         { name: 'Dashboard', href: 'admin.dashboard', icon: LayoutDashboard, pattern: 'admin.dashboard' },
         { name: 'Data Laporan', href: 'admin.reports.index', icon: FileText, pattern: 'admin.reports.*' },
         { name: 'Master Lampu', href: 'admin.lamp-posts.index', icon: Lightbulb, pattern: 'admin.lamp-posts.*' },
+        { name: 'KPI Petugas', href: 'admin.kpi.index', icon: Award, pattern: 'admin.kpi.*' },
         { name: 'Manajemen User', href: 'admin.users.index', icon: User, pattern: 'admin.users.*' },
     ];
 
