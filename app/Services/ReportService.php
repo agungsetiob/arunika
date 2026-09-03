@@ -49,12 +49,12 @@ class ReportService
         DB::beginTransaction();
         try {
             $oldStatus = $report->status;
-            
+
             $report->update([
                 'status'   => 'in_progress',
                 'priority' => $data['priority']
             ]);
-            
+
             $report->assignment()->create([
                 'petugas_id' => $data['user_id'] ?? $data['petugas_id'],
                 'status'     => 'assigned'
@@ -72,7 +72,6 @@ class ReportService
             DB::commit();
 
             $this->sendAssignmentNotification($data['user_id'] ?? $data['petugas_id'], $report, $data['priority']);
-
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -83,6 +82,11 @@ class ReportService
     {
         $petugas = User::find($petugasId);
         if (!$petugas) return;
+
+        $assignment = $report->assignment()->create([
+            'petugas_id' => $petugas->id,
+            'status' => 'assigned'
+        ]);
 
         // 1. Send FCM Web Notification
         if ($petugas->fcm_token) {
@@ -108,7 +112,9 @@ class ReportService
             'data' => [
                 'title' => 'Tugas Baru (' . strtoupper($priority) . ')',
                 'body'  => 'Ada tugas perbaikan di ' . $report->alamat_lengkap,
-                'type'  => 'assignment'
+                'type'  => 'assignment',
+                'assignment_id' => $assignment->id,
+                'report_id'     => $report->id,
             ],
         ]);
     }
@@ -128,7 +134,7 @@ class ReportService
 
         $columns = ['ID Tiket', 'Tanggal', 'Nama Pelapor', 'Telepon', 'Jenis', 'Kategori', 'Status', 'Alamat Lengkap'];
 
-        $callback = function() use ($reports, $columns) {
+        $callback = function () use ($reports, $columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
@@ -219,11 +225,12 @@ class ReportService
         foreach ($admins as $admin) {
             $admin->notifications()->create([
                 'id'   => \Illuminate\Support\Str::uuid(),
-                'type' => 'App\Notifications\NewReport', 
+                'type' => 'App\Notifications\NewReport',
                 'data' => [
                     'title' => 'Laporan Baru Masuk!',
                     'body'  => 'Kerusakan ' . str_replace('_', ' ', $report->damage_category) . ' di ' . $report->alamat_lengkap,
-                    'type'  => 'alert'
+                    'type'  => 'alert',
+                    'report_id' => $report->id
                 ],
             ]);
         }

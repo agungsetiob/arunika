@@ -10,4 +10,5 @@ interface LampPostRepositoryInterface
     public function create(array $data);
     public function update(LampPost $lampPost, array $data);
     public function delete(LampPost $lampPost);
+    public function getNearby(float $lat, float $lng, float $radius = 500);
 }

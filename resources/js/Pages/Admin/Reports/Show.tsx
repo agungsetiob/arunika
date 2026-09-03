@@ -157,27 +157,67 @@ export default function Show({ report, petugas }: any) {
                             {/* Foto Laporan */}
                             <div className="mb-8">
                                 <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                    <Camera className="w-4 h-4 text-orange-500" /> Bukti Foto (Kondisi Awal)
+                                    <Camera className="w-4 h-4 text-orange-500" /> Bukti Foto
                                 </h4>
-                                <div className="flex gap-4 overflow-x-auto pb-2">
-                                    {report.media && report.media.length > 0 ? (
-                                        report.media.map((img: any) => (
-                                            <div key={img.id} className="min-w-[160px] h-36 bg-slate-100 rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+
+                                <div className="flex gap-6">
+                                    {/* Foto Sebelum */}
+                                    <div className="flex-1">
+                                        <h5 className="text-xs font-semibold text-slate-600 mb-2">Sebelum</h5>
+                                        {report.media?.filter((img: any) => img.type === 'before').length > 0 ? (
+                                        report.media
+                                            .filter((img: any) => img.type === 'before')
+                                            .map((img: any) => (
+                                            <div key={img.id} className="w-full h-64 bg-slate-100 rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                                                 {img.url ? (
-                                                    <img src={img.url} className="object-cover w-full h-full hover:scale-105 transition-transform cursor-pointer" alt="Bukti Laporan" />
+                                                <img
+                                                    src={img.url}
+                                                    className="object-cover w-full h-full hover:scale-105 transition-transform cursor-pointer"
+                                                    alt="Foto Sebelum"
+                                                />
                                                 ) : (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                                                        <Camera className="w-6 h-6 mb-1 opacity-50" />
-                                                        <span className="text-[10px] font-medium uppercase">No Image</span>
-                                                    </div>
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                                    <Camera className="w-6 h-6 mb-1 opacity-50" />
+                                                    <span className="text-[10px] font-medium uppercase">No Image</span>
+                                                </div>
                                                 )}
                                             </div>
-                                        ))
-                                    ) : (
+                                            ))
+                                        ) : (
                                         <p className="text-sm text-slate-500 italic bg-slate-50 p-4 rounded-xl border border-slate-100 w-full text-center">
-                                            Tidak ada foto yang dilampirkan oleh pelapor.
+                                            Tidak ada foto sebelum.
                                         </p>
-                                    )}
+                                        )}
+                                    </div>
+
+                                    {/* Foto Sesudah */}
+                                    <div className="flex-1">
+                                        <h5 className="text-xs font-semibold text-slate-600 mb-2">Sesudah</h5>
+                                        {report.media?.filter((img: any) => img.type === 'after').length > 0 ? (
+                                        report.media
+                                            .filter((img: any) => img.type === 'after')
+                                            .map((img: any) => (
+                                            <div key={img.id} className="w-full h-64 bg-slate-100 rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                                                {img.url ? (
+                                                <img
+                                                    src={img.url}
+                                                    className="object-cover w-full h-full hover:scale-105 transition-transform cursor-pointer"
+                                                    alt="Foto Sesudah"
+                                                />
+                                                ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                                    <Camera className="w-6 h-6 mb-1 opacity-50" />
+                                                    <span className="text-[10px] font-medium uppercase">No Image</span>
+                                                </div>
+                                                )}
+                                            </div>
+                                            ))
+                                        ) : (
+                                        <p className="text-sm text-slate-500 italic bg-slate-50 p-4 rounded-xl border border-slate-100 w-full text-center">
+                                            Tidak ada foto sesudah.
+                                        </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -381,7 +421,7 @@ export default function Show({ report, petugas }: any) {
                 confirmColor="red"
                 isLoading={processing}
                 loadingText="Menolak Tiket..."
-                loadingIcon="AlertTriangle"
+                loadingIcon="Loader"
                 onCancel={() => setIsRejectModalOpen(false)}
                 onConfirm={executeReject}
                 variant="confirm"

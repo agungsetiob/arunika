@@ -64,7 +64,6 @@ export default function Dashboard() {
         <AuthenticatedLayout header="Dashboard Utama">
             <Head title="Dashboard" />
 
-            <div className="min-h-screen">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                     <div>
                         <h2 className="text-2xl font-extrabold text-slate-900">Ringkasan Sistem</h2>
@@ -141,7 +140,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
 
-                            {/* 3. Laporan Terbaru (Kanan - Sama seperti sebelumnya) */}
+                            {/* 3. Laporan Terbaru */}
                             <div className="lg:col-span-1">
                                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <AlertTriangle className="w-5 h-5 text-orange-500" /> 5 Laporan Terakhir
@@ -168,7 +167,6 @@ export default function Dashboard() {
                         </div>
                     </div>
                 )}
-            </div>
         </AuthenticatedLayout>
     );
 }

@@ -18,7 +18,7 @@ class UpdateProfileApiRequest extends FormRequest
             'phone'    => ['required', 'regex:/^08[0-9]{8,11}$/', 'unique:users,phone,' . $userId],
             'email'    => 'required|email|max:255|unique:users,email,' . $userId,
             'nik'      => ['required', 'digits:16', 'unique:users,nik,' . $userId],
-            'password' => 'nullable|string|min:6',
+            'password' => 'nullable|string|min:8',
         ];
     }
 }

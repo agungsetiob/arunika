@@ -16,7 +16,7 @@ class AssignmentSeeder extends Seeder
         for ($i = 1; $i <= 70; $i++) {
             $assignments[] = [
                 'report_id' => $i, // asumsi report id 1-130
-                'petugas_id' => $faker->numberBetween(1, 7), // sesuai permintaan
+                'petugas_id' => $faker->numberBetween(3, 7), // sesuai permintaan
                 'status' => $faker->randomElement(['assigned', 'accepted', 'on_site', 'completed']),
                 'assigned_at' => now(),
                 'completed_at' => $faker->optional()->dateTimeThisYear,

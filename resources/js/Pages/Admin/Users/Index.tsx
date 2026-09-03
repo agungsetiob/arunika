@@ -111,7 +111,7 @@ export default function Index({ users, filters }: Props) {
     <AuthenticatedLayout header="Manajemen Pengguna">
       <Head title="Manajemen Pengguna" />
 
-      <div className="max-w-8xl mx-auto">
+      {/* <div className="max-w-8xl mx-auto"> */}
 
         {/* Header Section (Search, Filter, Add Button) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 mt-2">
@@ -158,7 +158,7 @@ export default function Index({ users, filters }: Props) {
         </div>
 
         {/* Tabel Data */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -216,7 +216,7 @@ export default function Index({ users, filters }: Props) {
                           )}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                          <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             user.is_active 
                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
                             : 'bg-red-50 text-red-600 border border-red-100'
@@ -251,39 +251,38 @@ export default function Index({ users, filters }: Props) {
               </tbody>
             </table>
           </div>
+            {/* Pagination component */}
+            {users?.total > 10 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/30">
+                <span className="text-sm text-slate-500">
+                  Menampilkan <span className="font-bold text-slate-700">{users.current_page * 10 - 9}</span> - <span className="font-bold text-slate-700">{Math.min(users.current_page * 10, users.total)}</span> dari <span className="font-bold text-slate-700">{users.total}</span> pengguna
+                </span>
+                <div className="flex space-x-1">
+                  {users.links.map((link, index) => {
+                    let label = link.label.replace('&laquo;', '«').replace('&raquo;', '»');
+                    return link.url ? (
+                      <button
+                        key={index}
+                        onClick={() => router.get(link.url!, {}, { preserveScroll: true })}
+                        className={`flex items-center justify-center min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
+                          link.active 
+                              ? 'bg-orange-600 text-white shadow-sm' 
+                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-orange-600'
+                        }`}
+                        dangerouslySetInnerHTML={{ __html: label }}
+                      />
+                    ) : (
+                      <span 
+                        key={index} 
+                        className="flex items-center justify-center min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium bg-slate-50 text-slate-400 border border-slate-100 cursor-not-allowed"
+                        dangerouslySetInnerHTML={{ __html: label }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
         </div>
-
-        {/* Pagination component */}
-        {users?.total > 10 && (
-          <div className="flex items-center justify-between px-6 py-4 mt-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-            <span className="text-sm text-slate-500">
-              Menampilkan <span className="font-bold text-slate-700">{users.current_page * 10 - 9}</span> - <span className="font-bold text-slate-700">{Math.min(users.current_page * 10, users.total)}</span> dari <span className="font-bold text-slate-700">{users.total}</span> pengguna
-            </span>
-            <div className="flex space-x-1">
-              {users.links.map((link, index) => {
-                let label = link.label.replace('&laquo;', '«').replace('&raquo;', '»');
-                return link.url ? (
-                  <button
-                    key={index}
-                    onClick={() => router.get(link.url!, {}, { preserveScroll: true })}
-                    className={`flex items-center justify-center min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
-                      link.active 
-                          ? 'bg-sky-600 text-white shadow-sm' 
-                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-sky-600'
-                    }`}
-                    dangerouslySetInnerHTML={{ __html: label }}
-                  />
-                ) : (
-                  <span 
-                    key={index} 
-                    className="flex items-center justify-center min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium bg-slate-50 text-slate-400 border border-slate-100 cursor-not-allowed"
-                    dangerouslySetInnerHTML={{ __html: label }}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         <UserFormModal
           isOpen={modalState.isOpen}
@@ -308,7 +307,7 @@ export default function Index({ users, filters }: Props) {
           onConfirm={executeToggleStatus}
         />
 
-      </div>
+      {/* </div> */}
     </AuthenticatedLayout>
   );
 }

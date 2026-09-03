@@ -117,7 +117,7 @@ export default function Index({ reports, filters }: Props) {
                         target="_blank"
                         className="flex items-center gap-2 bg-emerald-600 border border-transparent text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-500/20"
                     >
-                        <FileSpreadsheet className="h-4 w-4" /> Export Excel
+                        <FileSpreadsheet className="h-4 w-4" /> Excel
                     </a>
                 </div>
             </div>
@@ -150,7 +150,7 @@ export default function Index({ reports, filters }: Props) {
                                 </tr>
                             ) : (
                                 reports.data.map((report) => (
-                                    <tr key={report.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <tr key={report.id} className={`hover:bg-slate-50/50 transition-colors group ${report.status === 'rejected' ? 'bg-rose-100' : ''}`}>
                                         
                                         <td className="px-6 py-4">
                                             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-bold">

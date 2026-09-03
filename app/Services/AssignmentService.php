@@ -96,7 +96,8 @@ class AssignmentService
                 'data' => [
                     'title' => '✅ Laporan Selesai Diperbaiki!',
                     'body'  => 'Laporan ' . strtoupper($report->type) . ' di ' . $report->alamat_lengkap . ' telah selesai ditangani. Terima kasih atas laporan Anda!',
-                    'type'  => 'completed'
+                    'type'  => 'completed',
+                    'report_id' => $report->id
                 ],
             ]);
         } catch (\Exception $e) {

@@ -41,4 +41,21 @@ class LampPostRepository implements LampPostRepositoryInterface
     {
         return $lampPost->delete();
     }
+
+    public function getNearby(float $lat, float $lng, float $radius = 500)
+    {
+        return LampPost::select('*')
+            ->selectRaw(
+                '( 6371000 * acos( cos( radians(?) ) *
+                  cos( radians( lat ) )
+                  * cos( radians( lng ) - radians(?)
+                  ) + sin( radians(?) ) *
+                  sin( radians( lat ) ) )
+                ) AS distance', 
+                [$lat, $lng, $lat]
+            )
+            ->having('distance', '<=', $radius)
+            ->orderBy('distance')
+            ->get();
+    }
 }
