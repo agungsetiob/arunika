@@ -29,7 +29,6 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // TAMBAHKAN KEMBALI DATA PETA SEBARAN
         $mapReports = Report::select('id', 'damage_category', 'status', 'lat', 'lng', 'alamat_lengkap')
             ->where('status', 'pending')
             ->orWhere('status', 'verified')

@@ -3,163 +3,90 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Report;
-use App\Models\User;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
-use Kreait\Laravel\Firebase\Facades\Firebase;
+use App\Http\Requests\Api\RejectReportApiRequest;
+use App\Http\Requests\Api\AssignPetugasApiRequest;
+use App\Repositories\Contracts\ReportRepositoryInterface;
+use App\Repositories\UserRepository;
+use App\Services\ReportService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
+    protected $reportRepo;
+    protected $userRepo;
+    protected $reportService;
+
+    public function __construct(
+        ReportRepositoryInterface $reportRepo, 
+        UserRepository $userRepo, 
+        ReportService $reportService
+    ) {
+        $this->reportRepo = $reportRepo;
+        $this->userRepo = $userRepo;
+        $this->reportService = $reportService;
+    }
+
     public function getPendingReports(Request $request)
     {
-        // Parameter status=pending,verified dari frontend
         $statuses = explode(',', $request->query('status', 'pending'));
-
-        $reports = Report::with(['media', 'lampPost'])
-            ->whereIn('status', $statuses)
-            ->orderBy('created_at', 'desc')
-            ->orderBy('id', 'desc')
-            ->paginate(9);
+        $reports = $this->reportRepo->getByStatuses($statuses, 9);
 
         return response()->json($reports);
     }
 
-    public function getPetugasList()
+    public function getPetugasList(Request $request)
     {
-        // Pastikan package Spatie Permission sudah terinstall di Laravel
-        $petugas = User::role('petugas')->select('id', 'name', 'phone')->get();
+        $petugas = $this->userRepo->searchPetugas($request->query('search'));
 
         return response()->json(['data' => $petugas]);
     }
 
-    // Fungsi untuk Verifikasi Laporan
     public function verifyReport(Request $request, $id)
     {
-        DB::beginTransaction();
         try {
-            $report = Report::findOrFail($id);
-            $report->update(['status' => 'verified']);
-
-            $report->histories()->create([
-                'changed_by' => $request->user()->id,
-                'from_status' => 'pending',
-                'to_status' => 'verified',
-                'notes' => 'Laporan dinyatakan valid dan diverifikasi oleh Admin (via Mobile).'
-            ]);
-
-            DB::commit();
+            $report = $this->reportRepo->findById($id);
+            
+            // Pass custom note khusus API mobile
+            $this->reportService->verifyReport($report, $request->user()->id, 'Laporan dinyatakan valid dan diverifikasi oleh Admin (via Mobile).');
+            
             return response()->json(['status' => 'success', 'message' => 'Laporan berhasil diverifikasi.']);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            Log::error('API Verify Error: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan sistem.'], 500);
         }
     }
 
-    // Fungsi untuk Menolak Laporan
-    public function rejectReport(Request $request, $id)
+    public function rejectReport(RejectReportApiRequest $request, $id)
     {
-        $request->validate(['notes' => 'required|string|max:255']);
-
-        DB::beginTransaction();
         try {
-            $report = Report::findOrFail($id);
-            $report->update(['status' => 'rejected']);
-
-            $report->histories()->create([
-                'changed_by' => $request->user()->id,
-                'from_status' => 'pending',
-                'to_status' => 'rejected',
-                'notes' => $request->notes
-            ]);
-
-            DB::commit();
+            $report = $this->reportRepo->findById($id);
+            $this->reportService->rejectReport($report, $request->notes, $request->user()->id);
+            
             return response()->json(['status' => 'success', 'message' => 'Laporan berhasil ditolak.']);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            Log::error('API Reject Error: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan sistem.'], 500);
         }
     }
 
-    // 3. Mengeksekusi penugasan (Assign)
-    public function assignPetugas(Request $request)
+    public function assignPetugas(AssignPetugasApiRequest $request)
     {
-        // 1. Tambahkan validasi priority
-        $validated = $request->validate([
-            'report_id' => 'required|exists:reports,id',
-            'user_id' => 'required|exists:users,id', 
-            'priority' => 'required|in:low,medium,high,emergency',
-        ]);
-
-        DB::beginTransaction();
         try {
-            $report = Report::findOrFail($validated['report_id']);
-            $oldStatus = $report->status;
-
-            // 2. Update status DAN priority laporan
-            $report->update([
-                'status' => 'in_progress',
-                'priority' => $validated['priority']
-            ]);
-
-            // Buat record assignment
-            $report->assignment()->create([
-                'petugas_id' => $validated['user_id'],
-                'status' => 'assigned'
-            ]);
-
-            // Catat riwayat beserta info prioritasnya
-            $report->histories()->create([
-                'changed_by' => $request->user()->id,
-                'from_status' => $oldStatus,
-                'to_status' => 'in_progress',
-                'notes' => 'Laporan diteruskan ke petugas (via Mobile). Prioritas: ' . strtoupper($validated['priority'])
-            ]);
-
-            DB::commit();
-
-            $petugas = User::find($validated['user_id']);
-
-            // Jika petugas punya token FCM di HP-nya, tembak notifikasi!
-            if ($petugas && $petugas->fcm_token) {
-                try {
-                    $messaging = Firebase::messaging();
-                    $message = CloudMessage::new()
-                        ->withToken($petugas->fcm_token)
-                        ->withNotification(Notification::create(
-                            '🚨 Tugas Baru! (' . strtoupper($validated['priority']) . ')', // Tambahkan info prioritas di Judul Notif
-                            'Tugas perbaikan di ' . $report->alamat_lengkap . '.'
-                        ));
-
-                    $messaging->send($message);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Gagal mengirim FCM Assign Mobile: ' . $e->getMessage());
-                }
-            }
-
-            $petugas->notifications()->create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'type' => 'App\Notifications\Assignment',
-                'data' => [
-                    'title' => 'Tugas Baru (' . strtoupper($validated['priority']) . ')',
-                    'body' => 'Ada tugas perbaikan di ' . $report->alamat_lengkap,
-                    'type' => 'assignment'
-                ],
-            ]);
-
+            $validated = $request->validated();
+            $report = $this->reportRepo->findById($validated['report_id']);
+            
+            $this->reportService->assignPetugas($report, $validated, $request->user()->id, 'via Mobile');
+            
             return response()->json([
                 'status' => 'success',
-                'message' => 'Tugas dengan prioritas ' . strtoupper($validated['priority']) . ' berhasil diberikan kepada petugas.',
+                'message' => 'Tugas dengan prioritas ' . strtoupper($validated['priority']) . ' berhasil diberikan kepada petugas.'
             ]);
-
         } catch (\Exception $e) {
-            DB::rollBack();
+            Log::error('API Assign Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal memberikan tugas: ' . $e->getMessage()
+                'message' => 'Gagal memberikan tugas.'
             ], 500);
         }
     }

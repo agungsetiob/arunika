@@ -2,8 +2,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 import { 
-    Eye, Search, Download, Filter, 
-    MapPin, Zap, Calendar, User, FileText, FileSpreadsheet
+    Search, Filter, 
+    MapPin, Zap, Calendar, FileText, FileSpreadsheet,
+    SquareArrowOutUpRight
 } from 'lucide-react';
 
 // Tipe data berdasarkan Pagination Laravel
@@ -116,7 +117,7 @@ export default function Index({ reports, filters }: Props) {
                         target="_blank"
                         className="flex items-center gap-2 bg-emerald-600 border border-transparent text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-500/20"
                     >
-                        <FileSpreadsheet className="h-4 w-4" /> Export Excel
+                        <FileSpreadsheet className="h-4 w-4" /> Excel
                     </a>
                 </div>
             </div>
@@ -149,7 +150,7 @@ export default function Index({ reports, filters }: Props) {
                                 </tr>
                             ) : (
                                 reports.data.map((report) => (
-                                    <tr key={report.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <tr key={report.id} className={`hover:bg-slate-50/50 transition-colors group ${report.status === 'rejected' ? 'bg-rose-100' : ''}`}>
                                         
                                         <td className="px-6 py-4">
                                             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-bold">
@@ -193,7 +194,7 @@ export default function Index({ reports, filters }: Props) {
                                         </td>
                                         
                                         <td className="px-6 py-4 text-center">
-                                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${getStatusBadge(report.status)}`}>
+                                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusBadge(report.status)}`}>
                                                 {report.status.replace('_', ' ')}
                                             </span>
                                         </td>
@@ -205,7 +206,7 @@ export default function Index({ reports, filters }: Props) {
                                                     className="p-2 rounded-xl text-orange-600 hover:bg-orange-100 transition-colors"
                                                     title="Lihat Detail"
                                                 >
-                                                    <Eye size={18} />
+                                                    <SquareArrowOutUpRight size={18} />
                                                 </Link>
                                             </div>
                                         </td>

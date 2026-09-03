@@ -13,7 +13,7 @@ class LampPostSeeder extends Seeder
         $faker = Faker::create('id_ID');
         $lampPosts = [];
 
-        for ($i = 1; $i <= 30; $i++) {
+        for ($i = 1; $i <= 190; $i++) {
             $lampPosts[] = [
                 'code_tiang' => 'PJU-' . strtoupper($faker->lexify('BTC-???')) . '-' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'type' => $faker->randomElement(['pju', 'traffic_light']),

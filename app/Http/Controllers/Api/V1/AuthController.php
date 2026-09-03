@@ -3,80 +3,56 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\Api\RegisterApiRequest;
+use App\Http\Requests\Api\LoginApiRequest;
+use App\Http\Requests\Api\UpdateFcmTokenApiRequest;
+use App\Services\AuthService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Exception;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    protected $authService;
+
+    public function __construct(AuthService $authService)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users,email|max:255',
-            'phone' => 'required|string|unique:users,phone|max:20',
-            'nik' => 'required|string|unique:users,nik|size:16',
-            'password' => 'required|string|min:6',
-        ]);
+        $this->authService = $authService;
+    }
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'nik' => $validated['nik'],
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        // Berikan role warga secara default
-        $user->assignRole('warga');
-
-        $token = $user->createToken('mobile-app')->plainTextToken;
+    public function register(RegisterApiRequest $request)
+    {
+        $result = $this->authService->registerWarga($request->validated());
 
         return response()->json([
             'message' => 'Registrasi berhasil',
-            'data' => $user,
-            'token' => $token
+            'data'    => $result['user'],
+            'token'   => $result['token']
         ], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginApiRequest $request)
     {
-        $request->validate([
-            'phone' => 'required|string',
-            'password' => 'required|string',
-        ]);
+        try {
+            $result = $this->authService->login($request->validated());
 
-        $user = User::where('phone', $request->phone)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'phone' => ['Nomor HP atau password salah.'],
+            return response()->json([
+                'message' => 'Login berhasil',
+                'data'    => $result['user'],
+                'role'    => $result['role'],
+                'token'   => $result['token']
             ]);
+            
+        } catch (Exception $e) {
+            if ($e->getCode() === 403) {
+                return response()->json(['message' => $e->getMessage()], 403);
+            }
+            throw $e; // Biarkan ValidationException atau error lain ditangani Laravel
         }
-
-        if (!$user->is_active) {
-            return response()->json(['message' => 'Akun Anda telah dinonaktifkan.'], 403);
-        }
-
-        // Simpan/Update FCM token jika dikirim dari mobile
-        if ($request->has('fcm_token')) {
-            $user->update(['fcm_token' => $request->fcm_token]);
-        }
-
-        $token = $user->createToken('mobile-app')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login berhasil',
-            'data' => $user,
-            'role' => $user->roles->first()->name ?? 'warga',
-            'token' => $token
-        ]);
     }
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->authService->logout($request->user());
 
         return response()->json([
             'message' => 'Logout berhasil'
@@ -90,15 +66,9 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updateFcmToken(Request $request)
+    public function updateFcmToken(UpdateFcmTokenApiRequest $request)
     {
-        $request->validate([
-            'fcm_token' => 'required|string',
-        ]);
-
-        $request->user()->update([
-            'fcm_token' => $request->fcm_token
-        ]);
+        $this->authService->updateFcmToken($request->user(), $request->fcm_token);
 
         return response()->json([
             'message' => 'FCM Token berhasil diperbarui'

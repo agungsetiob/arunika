@@ -3,52 +3,26 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\Api\UpdateProfileApiRequest;
+use App\Services\UserService;
 
 class ProfileController extends Controller
 {
-    public function update(Request $request)
+    protected $userService;
+
+    public function __construct(UserService $userService)
     {
-        $user = $request->user();
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            // Pastikan nomor HP unik, kecuali untuk milik user itu sendiri
-            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
-            'password' => 'nullable|string|min:6',
-        ]);
-
-        $user->name = $validated['name'];
-        $user->phone = $validated['phone'];
-
-        // Update password hanya jika kolom password diisi
-        if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
-        }
-
-        $user->save();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Profil berhasil diperbarui.',
-            'data' => $user
-        ]);
+        $this->userService = $userService;
     }
 
-    public function updateFcmToken(Request $request)
+    public function update(UpdateProfileApiRequest $request)
     {
-        $request->validate([
-            'fcm_token' => 'required|string'
-        ]);
-
-        $request->user()->update([
-            'fcm_token' => $request->fcm_token
-        ]);
+        $user = $this->userService->updateUser($request->user(), $request->validated());
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'FCM Token berhasil diperbarui'
+            'status'  => 'success',
+            'message' => 'Profil berhasil diperbarui.',
+            'data'    => $user
         ]);
     }
 }

@@ -3,40 +3,31 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\LampPost;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\NearbyLampPostApiRequest;
+use App\Repositories\Contracts\LampPostRepositoryInterface;
 
 class LampPostController extends Controller
 {
-    public function nearby(Request $request)
+    protected $repository;
+
+    public function __construct(LampPostRepositoryInterface $repository)
     {
-        $request->validate([
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
-            'radius' => 'nullable|numeric' // Radius dalam satuan meter
-        ]);
+        $this->repository = $repository;
+    }
 
-        $lat = $request->lat;
-        $lng = $request->lng;
-        $radius = $request->radius ?? 500; // Default 500 meter
+    public function nearby(NearbyLampPostApiRequest $request)
+    {
+        $validated = $request->validated();
 
-        // Cari tiang lampu terdekat menggunakan Haversine Formula
-        $lampPosts = LampPost::select('*')
-            ->selectRaw(
-                '( 6371000 * acos( cos( radians(?) ) *
-                  cos( radians( lat ) )
-                  * cos( radians( lng ) - radians(?)
-                  ) + sin( radians(?) ) *
-                  sin( radians( lat ) ) )
-                ) AS distance', [$lat, $lng, $lat]
-            )
-            ->having('distance', '<=', $radius)
-            ->orderBy('distance')
-            ->get();
+        $lat = $validated['lat'];
+        $lng = $validated['lng'];
+        $radius = $validated['radius'] ?? 500;
+
+        $lampPosts = $this->repository->getNearby($lat, $lng, $radius);
 
         return response()->json([
             'status' => 'success',
-            'data' => $lampPosts
+            'data'   => $lampPosts
         ]);
     }
 }

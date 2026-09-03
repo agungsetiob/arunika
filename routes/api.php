@@ -19,7 +19,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
-        Route::post('/fcm-token', [ProfileController::class, 'updateFcmToken']);
+        Route::post('/fcm-token', [AuthController::class, 'updateFcmToken']);
         Route::put('/profile', [ProfileController::class, 'update']);
 
         // Warga: Laporan
@@ -35,6 +35,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/reports/{id}/verify', [AdminController::class, 'verifyReport']);
             Route::post('/reports/{id}/reject', [AdminController::class, 'rejectReport']);
             Route::post('/assignments', [AdminController::class, 'assignPetugas']);
+            Route::get('/reports/{id}', function ($id) {
+                $report = \App\Models\Report::with(['user', 'media', 'assignment.petugas'])->findOrFail($id);
+                return response()->json(['status' => 'success', 'data' => $report]);
+            });
         });
 
         Route::middleware('role:petugas')->prefix('petugas')->group(function () {

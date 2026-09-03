@@ -3,25 +3,29 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    protected $service;
+
+    public function __construct(NotificationService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
-     * Mengambil daftar notifikasi milik user yang sedang login
+     * Mengambil daftar notifikasi milik user
      */
     public function index(Request $request)
     {
-        // Ambil notifikasi, urutkan dari yang terbaru, paginasi 20 per halaman
-        $notifications = $request->user()->notifications()->paginate(20);
-        
-        // Hitung jumlah yang belum dibaca (untuk badge lonceng merah)
-        $unreadCount = $request->user()->unreadNotifications()->count();
+        $result = $this->service->getUserNotifications($request->user());
 
         return response()->json([
-            'status' => 'success',
-            'data' => $notifications,
-            'unread_count' => $unreadCount
+            'status'       => 'success',
+            'data'         => $result['notifications'],
+            'unread_count' => $result['unread_count']
         ]);
     }
 
@@ -30,14 +34,10 @@ class NotificationController extends Controller
      */
     public function markAsRead(Request $request, $id)
     {
-        $notification = $request->user()->notifications()->where('id', $id)->first();
-        
-        if ($notification) {
-            $notification->markAsRead(); // Fitur bawaan Laravel
-        }
+        $this->service->markAsRead($request->user(), $id);
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Notifikasi ditandai sudah dibaca'
         ]);
     }
@@ -47,10 +47,10 @@ class NotificationController extends Controller
      */
     public function markAllAsRead(Request $request)
     {
-        $request->user()->unreadNotifications->markAsRead();
-        
+        $this->service->markAllAsRead($request->user());
+
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Semua notifikasi ditandai sudah dibaca'
         ]);
     }
