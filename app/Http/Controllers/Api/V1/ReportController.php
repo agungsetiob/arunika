@@ -79,4 +79,20 @@ class ReportController extends Controller
             ], 404);
         }
     }
+
+    public function publicMapData()
+    {
+        // Ambil 30 laporan terakhir agar peta tidak terlalu berat/lag di HP
+        $reports = \App\Models\Report::select('id', 'type', 'damage_category', 'alamat_lengkap', 'status', 'lat', 'lng', 'created_at')
+            // Kita sembunyikan laporan yang 'rejected' (ditolak)
+            ->whereIn('status', ['pending', 'verified', 'in_progress', 'completed'])
+            ->latest()
+            ->limit(30)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $reports
+        ]);
+    }
 }
