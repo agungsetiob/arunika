@@ -69,4 +69,9 @@ class AuthService
     {
         $this->userRepo->update($user, ['fcm_token' => $fcmToken]);
     }
+
+    public function getAdminPhone(): ?string
+    {
+        return $this->userRepo->adminPhone();
+    }
 }

@@ -14,6 +14,7 @@ Route::prefix('v1')->group(function () {
     // Auth Warga & Petugas
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::get('/auth/admin-phone', [AuthController::class, 'adminPhone']);
 
     // Protected Routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -21,6 +22,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/fcm-token', [AuthController::class, 'updateFcmToken']);
         Route::put('/profile', [ProfileController::class, 'update']);
+        Route::get('/gamification/leaderboard', [ReportController::class, 'leaderboard']);
 
         // Warga: Laporan
         Route::get('/reports/me', [ReportController::class, 'myReports']);

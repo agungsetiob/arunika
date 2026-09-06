@@ -83,10 +83,7 @@ class ReportService
         $petugas = User::find($petugasId);
         if (!$petugas) return;
 
-        $assignment = $report->assignment()->create([
-            'petugas_id' => $petugas->id,
-            'status' => 'assigned'
-        ]);
+        $assignmentId = $report->assignment->id ?? $report->id;
 
         // 1. Send FCM Web Notification
         if ($petugas->fcm_token) {
@@ -113,7 +110,7 @@ class ReportService
                 'title' => 'Tugas Baru (' . strtoupper($priority) . ')',
                 'body'  => 'Ada tugas perbaikan di ' . $report->alamat_lengkap,
                 'type'  => 'assignment',
-                'assignment_id' => $assignment->id,
+                'assignment_id' => $assignmentId,
                 'report_id'     => $report->id,
             ],
         ]);
@@ -224,7 +221,7 @@ class ReportService
         // 2. Database Notification
         foreach ($admins as $admin) {
             $admin->notifications()->create([
-                'id'   => \Illuminate\Support\Str::uuid(),
+                'id'   => Str::uuid(),
                 'type' => 'App\Notifications\NewReport',
                 'data' => [
                     'title' => 'Laporan Baru Masuk!',

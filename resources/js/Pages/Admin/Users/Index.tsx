@@ -165,7 +165,7 @@ export default function Index({ users, filters }: Props) {
                 <tr className="bg-slate-50/50 border-b border-slate-100 text-xs text-slate-500 uppercase tracking-wider">
                   <th className="px-6 py-4 font-bold">Nama / Email</th>
                   <th className="px-6 py-4 font-bold">Role</th>
-                  <th className="px-6 py-4 font-bold">Statistik Warga</th>
+                  <th className="px-6 py-4 font-bold">Statistik</th>
                   <th className="px-6 py-4 font-bold text-center">Status</th>
                   <th className="px-6 py-4 font-bold text-right">Aksi</th>
                 </tr>
