@@ -133,6 +133,9 @@ class ReportService
 
         $callback = function () use ($reports, $columns) {
             $file = fopen('php://output', 'w');
+            
+            fputs($file, "\xEF\xBB\xBF");
+            
             fputcsv($file, $columns);
 
             foreach ($reports as $row) {

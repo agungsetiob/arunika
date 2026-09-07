@@ -72,4 +72,14 @@ class UserRepository implements UserRepositoryInterface
         return $admin ? $admin->phone : null;
     }
 
+    public function getPetugasWithTaskCounts()
+    {
+        return User::role('petugas')
+            ->withCount(['assignments as total_tasks'])
+            ->withCount(['assignments as completed_tasks' => function ($query) {
+                $query->where('status', 'completed');
+            }])
+            ->get();
+    }
+
 }

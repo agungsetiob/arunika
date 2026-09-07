@@ -25,4 +25,12 @@ class AssignmentRepository implements AssignmentRepositoryInterface
             ->where('petugas_id', $petugasId)
             ->findOrFail($assignmentId);
     }
+
+    public function getCompletedAssignmentsByPetugas(int $petugasId)
+    {
+        return Assignment::where('petugas_id', $petugasId)
+            ->where('status', 'completed')
+            ->whereNotNull('completed_at')
+            ->get();
+    }
 }

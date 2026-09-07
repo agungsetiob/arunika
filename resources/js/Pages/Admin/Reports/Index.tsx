@@ -7,7 +7,6 @@ import {
     SquareArrowOutUpRight
 } from 'lucide-react';
 
-// Tipe data berdasarkan Pagination Laravel
 interface Report {
     id: number;
     damage_category: string;
@@ -31,16 +30,18 @@ interface PaginatedData {
 
 interface Props {
     reports: PaginatedData;
-    filters: { search?: string; status?: string }; // Tambahkan Props filters
+    filters: { search?: string; status?: string; start_date?: string; end_date?: string };
 }
 
 export default function Index({ reports, filters }: Props) {
-    // 1. Inisialisasi State Pencarian & Filter
     const [search, setSearch] = useState(filters?.search || '');
     const [status, setStatus] = useState(filters?.status || '');
+    // State untuk rentang tanggal
+    const [startDate, setStartDate] = useState(filters?.start_date || ''); 
+    const [endDate, setEndDate] = useState(filters?.end_date || '');
+    
     const isFirstRender = useRef(true);
 
-    // 2. Efek Debounce untuk Otomatis Mencari
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
@@ -48,15 +49,16 @@ export default function Index({ reports, filters }: Props) {
         }
 
         const delay = setTimeout(() => {
-            router.get(route('admin.reports.index'), { search, status }, { 
+            router.get(route('admin.reports.index'), { search, status, start_date: startDate, end_date: endDate }, { 
                 preserveState: true, 
                 preserveScroll: true, 
                 replace: true 
             });
-        }, 500); // Delay 0.5 detik saat mengetik
+        }, 500);
 
         return () => clearTimeout(delay);
-    }, [search, status]);
+    }, [search, status, startDate, endDate]);
+
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
             pending: 'bg-red-50 text-red-600 border border-red-100',
@@ -77,12 +79,11 @@ export default function Index({ reports, filters }: Props) {
         <AuthenticatedLayout header="Manajemen Laporan">
             <Head title="Daftar Laporan" />
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 mt-2">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 mt-2">
                 <div className="relative max-w-md w-full">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-5 w-5 text-slate-400" />
                     </div>
-                    {/* INPUT PENCARIAN */}
                     <input
                         type="text"
                         value={search}
@@ -92,8 +93,39 @@ export default function Index({ reports, filters }: Props) {
                     />
                 </div>
                 
-                <div className="flex items-center gap-2">
-                    {/* DROPDOWN FILTER STATUS */}
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* FILTER RENTANG TANGGAL */}
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                        <Calendar className="h-4 w-4 text-slate-400" />
+                        <div className="flex items-center">
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="appearance-none bg-transparent border-none text-slate-700 text-sm font-medium focus:ring-0 p-1 w-[120px]"
+                                title="Dari Tanggal"
+                            />
+                            <span className="text-slate-400 text-sm font-medium px-1">-</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="appearance-none bg-transparent border-none text-slate-700 text-sm font-medium focus:ring-0 p-1 w-[120px]"
+                                title="Sampai Tanggal"
+                            />
+                        </div>
+                        {/* Tombol Clear Tanggal */}
+                        {(startDate || endDate) && (
+                            <button 
+                                onClick={() => { setStartDate(''); setEndDate(''); }}
+                                className="ml-1 text-slate-400 hover:text-red-500 transition-colors"
+                                title="Reset Tanggal"
+                            >
+                                &times;
+                            </button>
+                        )}
+                    </div>
+
                     <div className="relative">
                         <select
                             value={status}
@@ -111,9 +143,9 @@ export default function Index({ reports, filters }: Props) {
                         <Filter className="absolute left-3 top-[11px] h-4 w-4 text-slate-500 pointer-events-none" />
                     </div>
                     
-                    {/* TOMBOL EXPORT EXCEL (CSV) */}
+                    {/* EXPORT CSV */}
                     <a 
-                        href={route('admin.reports.export', { search, status })}
+                        href={route('admin.reports.export', { search, status, start_date: startDate, end_date: endDate })}
                         target="_blank"
                         className="flex items-center gap-2 bg-emerald-600 border border-transparent text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-500/20"
                     >
@@ -210,7 +242,6 @@ export default function Index({ reports, filters }: Props) {
                                                 </Link>
                                             </div>
                                         </td>
-                                                                                
                                     </tr>
                                 ))
                             )}
@@ -226,7 +257,6 @@ export default function Index({ reports, filters }: Props) {
                         </span>
                         <div className="flex space-x-1">
                             {reports.links.map((link, index) => {
-                                // Bersihkan label pagination (Previous/Next bawaan Laravel)
                                 let label = link.label.replace('&laquo;', '«').replace('&raquo;', '»');
                                 
                                 return link.url ? (
