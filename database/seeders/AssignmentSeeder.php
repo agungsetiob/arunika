@@ -22,7 +22,7 @@ class AssignmentSeeder extends Seeder
                 'completed_at' => $faker->optional()->dateTimeThisYear,
                 'petugas_notes' => $faker->optional()->sentence,
                 'created_at' => now(),
-                'updated_at' => now(),
+                'updated_at' => now()->addHours($faker->numberBetween(1, 7)),
             ];
         }
 
