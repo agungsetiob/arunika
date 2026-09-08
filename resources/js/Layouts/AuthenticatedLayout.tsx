@@ -1,6 +1,8 @@
 import Dropdown from '@/Components/Dropdown';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState, useEffect } from 'react';
+import axios from 'axios';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import {
     LayoutDashboard,
     FileText,
@@ -12,7 +14,9 @@ import {
     X,
     CheckCircle2,
     XCircle,
-    Award
+    Award,
+    Bell,
+    CheckCheck
 } from 'lucide-react';
 
 export default function Authenticated({
@@ -21,7 +25,15 @@ export default function Authenticated({
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const user = usePage().props.auth.user;
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    
+    // --- STATE UNTUK LOADING GLOBAL (LOTTIE) ---
+    const [isGlobalLoading, setIsGlobalLoading] = useState(false);
 
+    // --- STATE UNTUK NOTIFIKASI ---
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    // Effect untuk mengunci scroll saat menu mobile terbuka
     useEffect(() => {
         if (isMobileMenuOpen) {
             document.body.style.overflow = 'hidden';
@@ -30,6 +42,7 @@ export default function Authenticated({
         }
     }, [isMobileMenuOpen]);
 
+    // Effect untuk Flash Message (Toast)
     const { flash } = usePage<any>().props;
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -45,6 +58,43 @@ export default function Authenticated({
             return () => clearTimeout(timer);
         }
     }, [flash]);
+
+    // Effect untuk mendengarkan event navigasi Inertia (Loading State)
+    useEffect(() => {
+        const removeStart = router.on('start', () => setIsGlobalLoading(true));
+        const removeFinish = router.on('finish', () => setIsGlobalLoading(false));
+
+        return () => {
+            removeStart();
+            removeFinish();
+        };
+    }, []);
+
+    // Effect untuk mengambil data Notifikasi
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const fetchNotifications = async () => {
+        try {
+            // Memanggil endpoint API notifikasi yang sudah dibuat sebelumnya
+            const response = await axios.get('/api/v1/notifications');
+            setNotifications(response.data.data.data || []); // .data.data karena API di-paginate
+            setUnreadCount(response.data.unread_count || 0);
+        } catch (error) {
+            console.error("Gagal memuat notifikasi", error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await axios.post('/api/v1/notifications/read-all');
+            setUnreadCount(0);
+            fetchNotifications(); // Refresh data
+        } catch (error) {
+            console.error("Gagal menandai notifikasi", error);
+        }
+    };
 
     const navItems = [
         { name: 'Dashboard', href: 'admin.dashboard', icon: LayoutDashboard, pattern: 'admin.dashboard' },
@@ -91,10 +141,7 @@ export default function Authenticated({
                                             !isActive && 'group-hover:scale-110'
                                         } ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-orange-500'}`}
                                     />
-
-                                    <span
-                                        className={`${!isActive && 'group-hover:translate-x-1'} transition-transform duration-300`}
-                                    >
+                                    <span className={`${!isActive && 'group-hover:translate-x-1'} transition-transform duration-300`}>
                                         {item.name}
                                     </span>
                                 </Link>
@@ -109,7 +156,6 @@ export default function Authenticated({
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-600">
                         {user.name.charAt(0).toUpperCase()}
                     </div>
-
                     <div className="flex flex-col overflow-hidden">
                         <p className="text-xs font-medium text-slate-500">Administrator</p>
                         <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
@@ -121,18 +167,24 @@ export default function Authenticated({
 
     return (
         <div className="min-h-screen bg-[#f4f7f9] font-sans selection:bg-orange-500 selection:text-white">
-            <div
-                className={`fixed inset-0 z-50 lg:hidden ${
-                    isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'
-                }`}
-            >
+            
+            {/* LOADING OVERLAY */}
+            {isGlobalLoading && (
+                <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="absolute top-1/4 left-1/2 -translate-x-1/2">
+                        <DotLottieReact src="/loading.lottie" loop autoplay style={{ width: 256, height: 256 }} />
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile Sidebar Overlay */}
+            <div className={`fixed inset-0 z-50 lg:hidden ${isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
                 <div
                     className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${
                         isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
-
                 <div
                     className={`fixed inset-y-0 left-0 flex w-72 max-w-xs flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
                         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
@@ -145,16 +197,18 @@ export default function Authenticated({
                     >
                         <X className="h-5 w-5 text-slate-700 transition-transform duration-300 hover:rotate-90" />
                     </button>
-
                     {renderSidebarContent()}
                 </div>
             </div>
 
+            {/* Desktop Sidebar */}
             <div className="hidden lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-72 lg:flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-slate-200/60 bg-white">
                 {renderSidebarContent()}
             </div>
 
             <div className="lg:pl-72 flex flex-col min-h-screen">
+                
+                {/* HEADER */}
                 <div className="sticky top-0 z-30 flex h-20 items-center gap-x-4 bg-white/70 backdrop-blur-xl px-4 sm:px-6 lg:px-8 border-b border-slate-200/50 transition-all">
                     <button
                         className="lg:hidden -m-2.5 p-2.5 text-slate-700 hover:text-slate-900 rounded-lg bg-white shadow-sm border border-slate-100"
@@ -169,32 +223,100 @@ export default function Authenticated({
                         </div>
                     )}
 
-                    <div className="flex flex-1 items-center justify-end gap-x-6">
+                    <div className="flex flex-1 items-center justify-end gap-x-4 sm:gap-x-6">
+                        
+                        {/* NOTIFICATION BELL */}
+                        <Dropdown>
+                            <Dropdown.Trigger>
+                                <button className="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-orange-500 transition-colors focus:outline-none">
+                                    <Bell className="h-6 w-6" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-white">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+                            </Dropdown.Trigger>
+                            
+                            <Dropdown.Content width="w-80 sm:w-96">
+                                <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                    <span className="font-bold text-slate-700">Notifikasi</span>
+                                    {unreadCount > 0 && (
+                                        <button 
+                                            onClick={markAllAsRead}
+                                            className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                                        >
+                                            <CheckCheck className="h-3.5 w-3.5" /> Tandai Dibaca
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                <div className="max-h-80 overflow-y-auto">
+                                    {notifications.length === 0 ? (
+                                        <div className="px-4 py-8 text-center text-sm text-slate-500">
+                                            Belum ada notifikasi.
+                                        </div>
+                                    ) : (
+                                        notifications.map((notif: any) => {
+                                            const reportId = notif.data.report_id; 
+                                            const targetUrl = reportId ? route('admin.reports.show', reportId) : route('admin.reports.index');
+
+                                            return (
+                                                <Link 
+                                                    key={notif.id} 
+                                                    href={targetUrl}
+                                                    onClick={async (e) => {
+                                                        if (!notif.read_at) {
+                                                            try {
+                                                                await axios.post(`/api/v1/notifications/${notif.id}/read`);
+                                                                setUnreadCount(prev => Math.max(0, prev - 1));
+                                                            } catch (error) {
+                                                                console.error("Gagal membaca notifikasi", error);
+                                                            }
+                                                        }
+                                                    }}
+                                                    className={`block px-4 py-3 border-b border-slate-50 transition-colors hover:bg-slate-100 ${notif.read_at ? 'opacity-60 bg-white' : 'bg-orange-50/50'}`}
+                                                >
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="font-bold text-sm text-slate-800 line-clamp-1">{notif.data.title}</span>
+                                                        {!notif.read_at && <span className="h-2 w-2 rounded-full bg-orange-500 shrink-0 mt-1.5 ml-2" />}
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 line-clamp-2">{notif.data.body}</p>
+                                                </Link>
+                                            )
+                                        })
+                                    )}
+                                </div>
+                                <div className="px-4 py-2 border-t border-slate-100 text-center bg-slate-50">
+                                    <Link href={route('admin.reports.index')} className="text-xs font-bold text-slate-500 hover:text-orange-600">
+                                        Lihat Semua Laporan
+                                    </Link>
+                                </div>
+                            </Dropdown.Content>
+                        </Dropdown>
+
+                        {/* USER DROPDOWN */}
                         <Dropdown>
                             <Dropdown.Trigger>
                                 <button className="group flex items-center gap-x-3 rounded-full bg-white py-1.5 pl-1.5 pr-4 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 hover:shadow-md transition-all">
                                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-slate-800 to-slate-900 text-xs font-bold text-white shadow-sm">
                                         {user.name.charAt(0).toUpperCase()}
                                     </span>
-
                                     <span className="hidden sm:inline-block">
                                         {user.name.split(' ')[0]}
                                     </span>
-
                                     <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-slate-600" />
                                 </button>
                             </Dropdown.Trigger>
 
-                            <Dropdown.Content width="48">
+                            <Dropdown.Content width="w-48">
                                 <Dropdown.Link
                                     href={route('profile.edit')}
                                     className="flex items-center text-slate-700 hover:bg-slate-50 hover:text-orange-600 transition-colors"
                                 >
                                     <User className="mr-2 h-4 w-4" /> Profil Saya
                                 </Dropdown.Link>
-
                                 <div className="border-t border-slate-100 my-1"></div>
-
                                 <Dropdown.Link
                                     href={route('logout')}
                                     method="post"
@@ -227,6 +349,7 @@ export default function Authenticated({
                 </footer>
             </div>
 
+            {/* TOAST FLASH MESSAGE */}
             {toast && (
                 <div className="fixed top-6 right-6 z-[200] animate-in slide-in-from-top-5 fade-in duration-300">
                     <div className="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl shadow-slate-900/20 flex items-center gap-3">
@@ -235,9 +358,7 @@ export default function Authenticated({
                         ) : (
                             <XCircle className="w-5 h-5 text-red-400" />
                         )}
-
                         <span className="text-sm font-bold">{toast.message}</span>
-
                         <button
                             onClick={() => setToast(null)}
                             className="ml-4 text-slate-400 hover:text-white"
