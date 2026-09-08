@@ -190,7 +190,7 @@ export default function Index({ reports, filters }: Props) {
                                             </span>
                                             <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
                                                 <Calendar className="h-3.5 w-3.5" />
-                                                {new Date(report.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                {new Date(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </td>
                                         
