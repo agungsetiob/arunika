@@ -19,7 +19,7 @@ class AssignmentSeeder extends Seeder
                 'petugas_id' => $faker->numberBetween(3, 7), // sesuai permintaan
                 'status' => $faker->randomElement(['assigned', 'accepted', 'on_site', 'completed']),
                 'assigned_at' => now(),
-                'completed_at' => $faker->optional()->dateTimeThisYear,
+                'completed_at' => now()->addHours($faker->numberBetween(1, 7)),
                 'petugas_notes' => $faker->optional()->sentence,
                 'created_at' => now(),
                 'updated_at' => now()->addHours($faker->numberBetween(1, 7)),
