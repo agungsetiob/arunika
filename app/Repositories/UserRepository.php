@@ -66,12 +66,20 @@ class UserRepository implements UserRepositoryInterface
         return User::where('phone', $phone)->first();
     }
 
-    // public function getActivePetugasList()
-    // {
-    //     return User::role('petugas')
-    //         ->select('id', 'name', 'phone')
-    //         ->where('is_active', true)
-    //         ->get();
-    // }
+    public function adminPhone()
+    {
+        $admin = User::role('admin')->first();
+        return $admin ? $admin->phone : null;
+    }
+
+    public function getPetugasWithTaskCounts()
+    {
+        return User::role('petugas')
+            ->withCount(['assignments as total_tasks'])
+            ->withCount(['assignments as completed_tasks' => function ($query) {
+                $query->where('status', 'completed');
+            }])
+            ->get();
+    }
 
 }

@@ -93,7 +93,7 @@ export default function Index({ petugasData, summary }: Props) {
                                                     #{index + 1}
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-base leading-tight truncate max-w-[120px]">{petugas.name}</h4>
+                                                    <h4 className="font-bold text-base leading-tight min-w-[120px]">{petugas.name}</h4>
                                                     <p className="text-slate-400 text-xs">{petugas.email}</p>
                                                 </div>
                                             </div>

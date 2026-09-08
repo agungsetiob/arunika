@@ -30,6 +30,15 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function adminPhone()
+    {
+        $result = $this->authService->getAdminPhone();
+
+        return response()->json([
+            'data' => $result
+        ]);
+    }
+
     public function login(LoginApiRequest $request)
     {
         try {
@@ -46,7 +55,7 @@ class AuthController extends Controller
             if ($e->getCode() === 403) {
                 return response()->json(['message' => $e->getMessage()], 403);
             }
-            throw $e; // Biarkan ValidationException atau error lain ditangani Laravel
+            throw $e;
         }
     }
 

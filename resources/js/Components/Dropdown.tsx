@@ -52,12 +52,12 @@ const Trigger = ({ children }: PropsWithChildren) => {
 
 const Content = ({
     align = 'right',
-    width = '48',
+    width = 'w-48', // Defaultnya gunakan class Tailwind langsung
     contentClasses = 'py-1 bg-white',
     children,
 }: PropsWithChildren<{
     align?: 'left' | 'right';
-    width?: '48';
+    width?: string; // Berubah dari specific string ke generic string
     contentClasses?: string;
 }>) => {
     const { open, setOpen } = useContext(DropDownContext);
@@ -68,12 +68,6 @@ const Content = ({
         alignmentClasses = 'ltr:origin-top-left rtl:origin-top-right start-0';
     } else if (align === 'right') {
         alignmentClasses = 'ltr:origin-top-right rtl:origin-top-left end-0';
-    }
-
-    let widthClasses = '';
-
-    if (width === '48') {
-        widthClasses = 'w-48';
     }
 
     return (
@@ -88,12 +82,12 @@ const Content = ({
                 leaveTo="opacity-0 scale-95"
             >
                 <div
-                    className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
+                    className={`absolute z-50 mt-2 rounded-xl shadow-xl border border-slate-100 overflow-hidden ${alignmentClasses} ${width}`}
                     onClick={() => setOpen(false)}
                 >
                     <div
                         className={
-                            `rounded-md ring-1 ring-black ring-opacity-5 ` +
+                            `bg-white ` +
                             contentClasses
                         }
                     >

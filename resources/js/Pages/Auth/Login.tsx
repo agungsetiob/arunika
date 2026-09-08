@@ -4,7 +4,7 @@ import InputLabel from "@/Components/InputLabel";
 import TextInput from "@/Components/TextInput";
 import { Head, Link, useForm } from "@inertiajs/react";
 import type { FormEvent } from "react";
-import { LogIn, Sparkles, User, Lock } from "lucide-react";
+import { LogIn, User, Lock, Sparkle } from "lucide-react";
 
 export default function Login({
     status,
@@ -230,10 +230,20 @@ export default function Login({
                                     type="submit"
                                     disabled={processing}
                                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all duration-200 hover:from-orange-600 hover:to-amber-600 hover:shadow-orange-500/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <LogIn className="h-4 w-4" />
-                                    Masuk
+                                    >
+                                    {processing ? (
+                                        <>
+                                        <Sparkle className="h-4 w-4 animate-spin" />
+                                        <span>Memproses...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                        <LogIn className="h-4 w-4" />
+                                        <span>Masuk</span>
+                                        </>
+                                    )}
                                 </button>
+
                             </form>
                         </div>
                     </div>

@@ -30,7 +30,7 @@ class ReportController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'status']);
+        $filters = $request->only(['search', 'status', 'start_date', 'end_date']);
         $reports = $this->reportRepo->getFiltered($filters, true);
 
         return Inertia::render('Admin/Reports/Index', [
@@ -76,7 +76,7 @@ class ReportController extends Controller
 
     public function export(Request $request)
     {
-        $filters = $request->only(['search', 'status']);
+        $filters = $request->only(['search', 'status', 'start_date', 'end_date']);
         return $this->reportService->exportCsv($filters);
     }
 }
